@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unfollow Users</title>
+</head>
+<body>
+<h1>Unfollow Users</h1>
+<form action="#" th:action="@{/unfollow}" method="post">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <label for="whiteList">White List (comma-separated):</label>
+    <input type="text" id="whiteList" name="whiteList"><br><br>
+
+    <button type="submit">Unfollow</button>
+</form>
+</body>
+</html>
