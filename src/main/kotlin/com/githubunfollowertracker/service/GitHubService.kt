@@ -19,29 +19,51 @@ class GitHubService(private val httpClient: OkHttpClient, private val gson: Gson
     private lateinit var githubApiUrl: String
 
     /**
-     * Retrieves a list of users that the specified user is following.
-     * @param userName The username for which to fetch the following list
+     * Retrieves a complete list of users that the specified user is following.
+     * This method pages through the GitHub API results until no more data is returned.
+     * @param userName The username for which to fetch the complete following list
      * @param credentials The access token or credentials for authentication
-     * @return List of usernames that the specified user is following
+     * @return Complete list of usernames that the specified user is following
      */
-    fun fetchFollowing(userName: String, credentials: String): List<String> {
-        // Construct URL for fetching following list
-        val url = "$githubApiUrl/users/$userName/following"
-        // Make API call and return the result
-        return makeApiCall(url, credentials, "GET")
+    fun fetchAllFollowing(userName: String, credentials: String): List<String> {
+        var page = 1 // Start from the first page
+        val allFollowing = mutableListOf<String>() // Initialize an empty list to store all following users
+
+        while (true) {
+            val url = "$githubApiUrl/users/$userName/following?per_page=100&page=$page" // Construct URL with pagination
+            val newFollowing = makeApiCall(url, credentials, "GET") // Fetch the following list for the page
+            if (newFollowing.isEmpty()) {
+                break // If no new users are found, end the loop
+            }
+            allFollowing.addAll(newFollowing) // Add the new users to the complete list
+            page++ // Move to the next page
+        }
+
+        return allFollowing // Return the complete list of following users
     }
 
     /**
-     * Retrieves a list of users who are followers of the specified user.
-     * @param userName The username for which to fetch the followers list
+     * Retrieves a complete list of users who are followers of the specified user.
+     * This method iterates over the GitHub API pages until it receives an empty response.
+     * @param userName The username for which to fetch the complete followers list
      * @param credentials The access token or credentials for authentication
-     * @return List of usernames who are followers of the specified user
+     * @return Complete list of usernames who are followers of the specified user
      */
-    fun fetchFollowers(userName: String, credentials: String): List<String> {
-        // Construct URL for fetching followers list
-        val url = "$githubApiUrl/users/$userName/followers"
-        // Make API call and return the result
-        return makeApiCall(url, credentials, "GET")
+    fun fetchAllFollowers(userName: String, credentials: String): List<String> {
+        var page = 1 // Start from the first page
+        val allFollowers = mutableListOf<String>() // Initialize an empty list to store all followers
+
+        while (true) {
+            val url = "$githubApiUrl/users/$userName/followers?per_page=100&page=$page" // Construct URL with pagination
+            val newFollowers = makeApiCall(url, credentials, "GET") // Fetch the followers list for the page
+            if (newFollowers.isEmpty()) {
+                break // If no new users are found, end the loop
+            }
+            allFollowers.addAll(newFollowers) // Add the new users to the complete list
+            page++ // Move to the next page
+        }
+
+        return allFollowers // Return the complete list of followers
     }
 
     /**
