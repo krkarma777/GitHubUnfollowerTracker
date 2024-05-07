@@ -10,19 +10,23 @@ import org.springframework.stereotype.Service
 @Service
 class GitHubService(private val httpClient: OkHttpClient, private val gson: Gson) {
 
+    // Variable to store the base URL for the GitHub API. The value is set in application.properties.
     @Value("\${github.api.url}")
     private lateinit var githubApiUrl: String
 
+    // Retrieves a list of users that the specified user is following.
     fun fetchFollowing(userName: String, credentials: String): List<String> {
         val url = "$githubApiUrl/users/$userName/following"
         return makeApiCall(url, credentials, "GET")
     }
 
+    // Retrieves a list of users who are followers of the specified user.
     fun fetchFollowers(userName: String, credentials: String): List<String> {
         val url = "$githubApiUrl/users/$userName/followers"
         return makeApiCall(url, credentials, "GET")
     }
 
+    // Unfollows a user on behalf of the specified user.
     fun unfollowUser(userName: String, userToUnfollow: String, credentials: String) {
         val url = "$githubApiUrl/user/following/$userToUnfollow"
         val request = Request.Builder()
@@ -37,6 +41,7 @@ class GitHubService(private val httpClient: OkHttpClient, private val gson: Gson
         }
     }
 
+    // Helper method to make API calls to GitHub with the provided URL, credentials, and HTTP method.
     private fun makeApiCall(url: String, credentials: String, method: String): List<String> {
         val builder = Request.Builder()
             .url(url)
