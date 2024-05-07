@@ -14,7 +14,8 @@
 
         body {
             font-family: 'intelone-mono-font-family-regular', monospace;
-            background-color: #0f0f0f;
+            background-image: url("/images/background.jpg");
+            background-size: cover;
             margin: 0;
             padding: 20px;
             color: #33ff33;
@@ -152,7 +153,7 @@
                 const userCard = document.createElement('div');
                 userCard.className = 'user-card';
                 userCard.innerHTML = `
-                <a href="https://github.com/${user.login}"><img class="avatar" src="${user.avatar_url}" alt="User Avatar">
+                <a style="text-decoration: none" href="https://github.com/${user.login}"><img class="avatar" src="${user.avatar_url}" alt="User Avatar">
                 <div class="username">${user.login}</div></a>
             `;
                 userCards.appendChild(userCard);
