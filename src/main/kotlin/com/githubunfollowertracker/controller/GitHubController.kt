@@ -9,28 +9,34 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-// Controller to manage GitHub user following and unfollowing
+/**
+ * Controller to manage GitHub user following and unfollowing.
+ */
 @RestController
 class GitHubController @Autowired constructor(
     private val gitHubService: GitHubService, // Service to handle GitHub API interactions
-    private val getAccessTokenService: GetAccessTokenService
+    private val getAccessTokenService: GetAccessTokenService // Service to retrieve OAuth2 access token
 ) {
 
-    // Endpoint to unfollow users not following back the authenticated user
+    /**
+     * Endpoint to unfollow users not following back the authenticated user.
+     * @param oAuth2AuthenticationToken Authentication token for OAuth2
+     * @param whiteList Optional whitelist of users to keep following
+     * @return ResponseEntity indicating the result of the operation
+     */
     @PostMapping("/unfollow")
     fun unfollow(
-        oAuth2AuthenticationToken: OAuth2AuthenticationToken, // Authentication token for OAuth2
-        @RequestParam(required = false) whiteList: List<String> = listOf() // Optional whitelist of users to keep following
+        oAuth2AuthenticationToken: OAuth2AuthenticationToken,
+        @RequestParam(required = false) whiteList: List<String> = listOf()
     ): ResponseEntity<String> {
-        val credentials =
-            getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String // Fetch access token
-        val userName =
-            oAuth2AuthenticationToken.principal.attributes["login"] as String // Extract user's login from token
-        val following = gitHubService.fetchFollowing(
-            userName,
-            credentials
-        ) // Fetch list of users the authenticated user is following
-        val followers = gitHubService.fetchFollowers(userName, credentials) // Fetch list of followers
+        // Fetch access token
+        val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
+        // Extract user's login from token
+        val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
+        // Fetch list of users the authenticated user is following
+        val following = gitHubService.fetchFollowing(userName, credentials)
+        // Fetch list of followers
+        val followers = gitHubService.fetchFollowers(userName, credentials)
 
         // Unfollow users who do not follow back and are not in the whitelist
         following.filterNot { follower -> followers.any { it == follower } || whiteList.contains(follower) }
