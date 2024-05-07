@@ -47,6 +47,46 @@
         button:hover {
             background-color: #45a049;
         }
+
+        /* Added styles */
+        .follower-list, .following-list {
+            margin-top: 20px;
+            border-top: 2px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .follower-list h2, .following-list h2 {
+            color: #555;
+        }
+
+        /* Added styles for user cards */
+        .user-cards {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .user-card {
+            text-align: center;
+            width: 150px;
+            margin: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+
+        .username {
+            font-weight: bold;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -57,6 +97,35 @@
     <form action="/unfollow" method="post">
         <button type="submit">Clean Up Followers</button>
     </form>
+
+    <!-- Display following list -->
+    <div class="following-list">
+        <h2>Following List</h2>
+        <div class="user-cards">
+            <!-- Use Thymeleaf to iterate over the following list -->
+            <div class="user-card" th:each="user : ${following}">
+                <a th:href="@{'https://github.com/' + ${user.login}}">
+                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
+                    <span class="username" th:text="${user.login}"></span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Display followers list -->
+    <div class="follower-list">
+        <h2>Followers List</h2>
+        <div class="user-cards">
+            <!-- Use Thymeleaf to iterate over the followers list -->
+            <div class="user-card" th:each="user : ${followers}">
+                <a th:href="@{'https://github.com/' + ${user.login}}">
+                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
+                    <span class="username" th:text="${user.login}"></span>
+                </a>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 </html>
