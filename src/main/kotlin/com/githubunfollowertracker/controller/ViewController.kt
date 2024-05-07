@@ -22,9 +22,6 @@ class ViewController @Autowired constructor(
         val following = followMonitoringService.getFollowingList(userName, credentials)
         val followers = followMonitoringService.getFollowersList(userName, credentials)
 
-        println("following = ${following}")
-        println("followers = ${followers}")
-
         model.addAttribute("following", following)
         model.addAttribute("followers", followers)
         return "main"
