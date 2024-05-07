@@ -1,6 +1,4 @@
-![image](https://github.com/krkarma777/GitHubUnfollowerTracker/assets/149022496/845cd7ae-d5f2-4d74-9f3d-802e38e33cc2)
-
-
+![image](https://github.com/krkarma777/GitHubUnfollowerTracker/assets/149022496/bc8a1f23-b332-4320-92a3-0b4533ed4499)
 
 
 # GitHubUnfollowerTracker
