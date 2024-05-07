@@ -2,62 +2,59 @@ package com.githubunfollowertracker.service
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
-import java.io.IOException
 
 @Service
-class GitHubService {
+class GitHubService(private val httpClient: OkHttpClient, private val gson: Gson) {
 
-    private val client = OkHttpClient()
-    private val gson = Gson()
+    @Value("\${github.api.url}")
+    private lateinit var githubApiUrl: String
 
-    fun unfollowUser(credentials: String, target: String) {
+    fun fetchFollowing(userName: String, credentials: String): List<String> {
+        val url = "$githubApiUrl/users/$userName/following"
+        return makeApiCall(url, credentials, "GET")
+    }
+
+    fun fetchFollowers(userName: String, credentials: String): List<String> {
+        val url = "$githubApiUrl/users/$userName/followers"
+        return makeApiCall(url, credentials, "GET")
+    }
+
+    fun unfollowUser(userName: String, userToUnfollow: String, credentials: String) {
+        val url = "$githubApiUrl/user/following/$userToUnfollow"
         val request = Request.Builder()
-            .url("https://api.github.com/user/following/$target")
+            .url(url)
             .delete()
-            .header("Authorization", credentials)
-            .header("User-Agent", "Patassaura")
+            .header("Authorization", "Bearer $credentials")
             .build()
 
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw IOException("Unexpected code $response")
-        }
-
-        println("Unfollowed $target")
-    }
-
-    fun followedUsers(credentials: String, currentPage: Int): List<Map<String, Any>> {
-        val request = Request.Builder()
-            .url("https://api.github.com/user/following?page=$currentPage")
-            .get()
-            .header("Authorization", credentials)
-            .header("User-Agent", "Patassaura")
-            .build()
-
-        client.newCall(request).execute().use { response ->
-            return gson.fromJson(response.body?.string(), object : TypeToken<List<Map<String, Any>>>() {}.type)
+        httpClient.newCall(request).execute().use { response ->
+            if (!response.isSuccessful)
+                throw RuntimeException("Failed to unfollow user: $userToUnfollow, Response: ${response.body?.string()}")
         }
     }
 
-    fun checkFollowBack(credentials: String, target: String, user: String): Boolean {
-        val request = Request.Builder()
-            .url("https://api.github.com/users/$target/following/$user")
-            .get()
-            .header("User-Agent", "Patassaura")
-            .build()
+    private fun makeApiCall(url: String, credentials: String, method: String): List<String> {
+        val builder = Request.Builder()
+            .url(url)
+            .header("Authorization", "Bearer $credentials")
 
-        client.newCall(request).execute().use { response ->
-            return response.code == 404
+        val request = when (method) {
+            "GET" -> builder.get().build()
+            else -> throw IllegalArgumentException("Unsupported HTTP method: $method")
         }
-    }
 
-    fun unfollowAll(credentials: String, username: String, followed: List<Map<String, Any>>, whiteList: List<String>) {
-        followed.forEach {
-            val targetUser = it["login"] as String
-            if (!whiteList.contains(targetUser) && checkFollowBack(credentials, targetUser, username)) {
-                unfollowUser(credentials, targetUser)
-            }
+        return httpClient.newCall(request).execute().use { response ->
+            val responseBody = response.body?.string()
+            if (!response.isSuccessful || responseBody == null)
+                throw RuntimeException("Failed to fetch data from GitHub, Response: $responseBody")
+
+            val type = object : TypeToken<List<Map<String, String>>>() {}.type
+            val result: List<Map<String, String>> = gson.fromJson(responseBody, type)
+            return result.map { it["login"] ?: throw IllegalStateException("Unexpected GitHub API response format") }
         }
     }
 }
