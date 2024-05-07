@@ -1,10 +1,9 @@
 package com.githubunfollowertracker.controller
 
+import com.githubunfollowertracker.service.GetAccessTokenService
 import com.githubunfollowertracker.service.GitHubService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -14,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 class GitHubController @Autowired constructor(
     private val gitHubService: GitHubService, // Service to handle GitHub API interactions
-    private val clientService: OAuth2AuthorizedClientService // Service to manage OAuth2 clients
+    private val getAccessTokenService: GetAccessTokenService
 ) {
 
     // Endpoint to unfollow users not following back the authenticated user
@@ -23,7 +22,8 @@ class GitHubController @Autowired constructor(
         oAuth2AuthenticationToken: OAuth2AuthenticationToken, // Authentication token for OAuth2
         @RequestParam(required = false) whiteList: List<String> = listOf() // Optional whitelist of users to keep following
     ): ResponseEntity<String> {
-        val credentials = getAccessToken(oAuth2AuthenticationToken) as String // Fetch access token
+        val credentials =
+            getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String // Fetch access token
         val userName =
             oAuth2AuthenticationToken.principal.attributes["login"] as String // Extract user's login from token
         val following = gitHubService.fetchFollowing(
@@ -39,13 +39,5 @@ class GitHubController @Autowired constructor(
             }
 
         return ResponseEntity.ok("Unfollowed non-followers successfully.")
-    }
-
-    // Helper function to retrieve access token from authentication token
-    fun getAccessToken(authentication: OAuth2AuthenticationToken): String? {
-        val authorizedClient = clientService.loadAuthorizedClient<OAuth2AuthorizedClient>(
-            "github", authentication.name
-        )
-        return authorizedClient?.accessToken?.tokenValue
     }
 }
