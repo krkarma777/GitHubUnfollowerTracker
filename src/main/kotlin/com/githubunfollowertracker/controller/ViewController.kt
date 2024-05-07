@@ -1,15 +1,32 @@
 package com.githubunfollowertracker.controller
 
+import com.githubunfollowertracker.service.FollowMonitoringService
+import com.githubunfollowertracker.service.GetAccessTokenService
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
 import org.springframework.stereotype.Controller
+import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 
-// Controller responsible for handling page view routing
 @Controller
-class ViewController {
+class ViewController @Autowired constructor(
+    private val followMonitoringService: FollowMonitoringService,
+    private val getAccessTokenService: GetAccessTokenService
+) {
 
-    // Mapping for the root URL that loads the main view page
     @GetMapping("/")
-    fun showUnfollowPage(): String {
-        return "main" // Returns the name of the Thymeleaf template to render (main.html)
+    fun showUnfollowPage(oAuth2AuthenticationToken: OAuth2AuthenticationToken, model: Model): String {
+        val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
+        val userName =
+            oAuth2AuthenticationToken.principal.attributes["login"] as String
+        val following = followMonitoringService.getFollowingList(userName, credentials)
+        val followers = followMonitoringService.getFollowersList(userName, credentials)
+
+        println("following = ${following}")
+        println("followers = ${followers}")
+
+        model.addAttribute("following", following)
+        model.addAttribute("followers", followers)
+        return "main"
     }
 }
