@@ -94,7 +94,7 @@
     <h1>Manage Your Followers</h1>
     <p>This tool helps you manage your GitHub following list by unfollowing users who do not reciprocate the follow,
         keeping your network optimized and relevant.</p>
-    <form action="/unfollow" method="post">
+    <form th:action="@{/unfollow}" method="post">
         <button type="submit">Clean Up Followers</button>
     </form>
 
