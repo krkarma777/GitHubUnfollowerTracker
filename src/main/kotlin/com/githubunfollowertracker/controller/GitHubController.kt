@@ -34,9 +34,9 @@ class GitHubController @Autowired constructor(
         // Extract user's login from token
         val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
         // Fetch list of users the authenticated user is following
-        val following = gitHubService.fetchFollowing(userName, credentials)
+        val following = gitHubService.fetchAllFollowing(userName, credentials)
         // Fetch list of followers
-        val followers = gitHubService.fetchFollowers(userName, credentials)
+        val followers = gitHubService.fetchAllFollowers(userName, credentials)
 
         // Unfollow users who do not follow back and are not in the whitelist
         following.filterNot { follower -> followers.any { it == follower } || whiteList.contains(follower) }
