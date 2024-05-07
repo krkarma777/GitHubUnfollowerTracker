@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unfollow Users</title>
     <style>
+        .center-align {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f4f4f9;
@@ -101,31 +108,89 @@
     <!-- Display following list -->
     <div class="following-list">
         <h2>Following List</h2>
-        <div class="user-cards">
-            <!-- Use Thymeleaf to iterate over the following list -->
-            <div class="user-card" th:each="user : ${following}">
-                <a th:href="@{'https://github.com/' + ${user.login}}">
-                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
-                    <span class="username" th:text="${user.login}"></span>
-                </a>
-            </div>
-        </div>
     </div>
 
     <!-- Display followers list -->
     <div class="follower-list">
         <h2>Followers List</h2>
-        <div class="user-cards">
-            <!-- Use Thymeleaf to iterate over the followers list -->
-            <div class="user-card" th:each="user : ${followers}">
-                <a th:href="@{'https://github.com/' + ${user.login}}">
-                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
-                    <span class="username" th:text="${user.login}"></span>
-                </a>
-            </div>
-        </div>
     </div>
 
 </div>
 </body>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const followersContainer = document.querySelector('.follower-list');
+        const followingContainer = document.querySelector('.following-list');
+        let currentPage = 1;
+
+        function fetchFollowers(page) {
+            fetch(`/follower?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayUsers(data, followersContainer, 'Followers');
+                    currentPage = page;
+                });
+        }
+
+        function fetchFollowing(page) {
+            fetch(`/following?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayUsers(data, followingContainer, 'Following');
+                    currentPage = page;
+                });
+        }
+
+        function displayUsers(users, container, listType) {
+            container.innerHTML = `<h2>${listType} List</h2>`;
+            const userCards = document.createElement('div');
+            userCards.className = 'user-cards';
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                userCard.innerHTML = `
+                <a href="html_url"><img class="avatar" src="${user.avatar_url}" alt="User Avatar">
+                <div class="username">${user.login}</div></a>
+            `;
+                userCards.appendChild(userCard);
+            });
+            container.appendChild(userCards);
+
+            if (users.length < 9) {
+                container.innerHTML += '<p>Last page reached.</p>';
+            }
+
+            addPagination(container, listType);
+        }
+
+        function addPagination(container, listType) {
+            const pagination = document.createElement('div');
+            pagination.className = 'center-align';
+            pagination.innerHTML = `
+                <button onclick="changePage(-1, '${listType}')">Previous</button>
+                <button onclick="changePage(1, '${listType}')">Next</button>
+            `;
+            container.appendChild(pagination);
+        }
+
+
+        window.changePage = function (delta, listType) {
+            const newPage = currentPage + delta;
+            if (newPage < 1) {
+                fetchFollowers(1);
+                fetchFollowing(1);
+            } else {
+                if (listType === 'Followers') {
+                    fetchFollowers(newPage);
+                } else {
+                    fetchFollowing(newPage);
+                }
+            }
+        };
+
+        // Initial fetch
+        fetchFollowers(1);
+        fetchFollowing(1);
+    });
+</script>
 </html>
