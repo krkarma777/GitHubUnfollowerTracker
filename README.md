@@ -1,66 +1,87 @@
+![image](https://github.com/krkarma777/GitHubUnfollowerTracker/assets/149022496/b343323a-a45b-47c3-ab94-27cc2878ce34)
+
+
 # GitHubUnfollowerTracker
 
 ## Project Description
 
-GitHubUnfollowerTracker is a web application that enables GitHub users to track and monitor unfollow activities among the people they follow. Developed using Kotlin and Spring Boot, this application utilizes the GitHub API to retrieve users' follower and following lists, providing a simple and intuitive way to monitor changes over time.
+GitHubUnfollowerTracker is a sleek, web-based application that enables users to effectively manage and monitor their GitHub social connections. Leveraging the GitHub API, it provides real-time insights into follower dynamics, allowing users to identify who has unfollowed them and manage their following list more efficiently. This tool is built using Kotlin and Spring Boot, offering a responsive and user-friendly interface.
 
 ## Features
 
-- **Track Unfollowers**: Easily see who has unfollowed you since your last check.
-- **View Following List**: Access a comprehensive list of everyone you are currently following on GitHub.
-- **Real-Time Updates**: Receive updates as changes occur in your follower and following lists.
-- **User-Friendly Interface**: Navigate the application with an intuitive interface designed for simplicity and ease of use.
+- **Monitor Unfollowers**: Instantly find out who has stopped following you.
+- **Manage Following List**: View and manage your current GitHub following list.
+- **Automatic Updates**: Stay informed with automatic updates reflecting any changes in your social graph.
+- **Enhanced User Interface**: Enjoy a modern interface that simplifies navigation and enhances user interaction.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+These instructions will guide you through setting up the project on your local machine for development and testing purposes.
 
 ### Prerequisites
 
-- JDK 11 or newer
-- Spring Boot 2.3+
-- Maven
-- Your GitHub API credentials
+- JDK 17 or newer
+- Spring Boot 3.2.5
+- Gradle or Maven as your build tool
+- GitHub API credentials
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone the repository:**
 
-   ```
+   ```bash
    git clone https://github.com/yourusername/GitHubUnfollowerTracker.git
    cd GitHubUnfollowerTracker
    ```
 
-2. **Configure application properties**
+2. **Set up application properties:**
 
-   Open `src/main/resources/application.properties` and set your GitHub API credentials:
+   Modify `src/main/resources/application-dev.properties` to include your GitHub API credentials:
 
+   ```properties
+   github.api.url=https://api.github.com
+   
+   # OAuth2 Client Configuration
+   spring.security.oauth2.client.registration.github.client-id={your-client-id}
+   spring.security.oauth2.client.registration.github.client-secret={your-client-secret}
+   spring.security.oauth2.client.registration.github.scope=read:user, user:email, user:follow
    ```
-   github.client.id=YOUR_CLIENT_ID
-   github.client.secret=YOUR_CLIENT_SECRET
+
+3. **Build the project:**
+
+   Using Gradle:
+
+   ```bash
+   ./gradlew build
    ```
 
-3. **Build the project**
+   Or Maven:
 
-   ```
+   ```bash
    mvn clean install
    ```
 
-4. **Run the application**
+4. **Run the application:**
 
+   ```bash
+   ./gradlew bootRun
    ```
+
+   Or with Maven:
+
+   ```bash
    mvn spring-boot:run
    ```
 
-   The application will start running at `http://localhost:8090`.
+   Visit `http://localhost:8090` in your browser.
 
 ## Usage
 
-Once the application is running, navigate to `http://localhost:8090` in your web browser to start tracking your GitHub unfollowers. Log in with your GitHub credentials to authorize the application to access your follower and following lists.
+Access the application by navigating to `http://localhost:8090` in your browser. Sign in using your GitHub credentials to authorize the application and start managing your follower and following lists.
 
 ## Contributing
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are welcome and greatly appreciated. Here’s how you can contribute:
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -70,5 +91,5 @@ Contributions are what make the open-source community such an amazing place to l
 
 ## Acknowledgments
 
-- Thanks to GitHub for providing the API that makes this service possible.
-- Special thanks to all contributors who have helped shape this project.
+- Hat tip to GitHub for the API used in this application.
+- A huge thank you to all contributors and the open-source community for continuous support.
