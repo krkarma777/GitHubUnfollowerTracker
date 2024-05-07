@@ -5,11 +5,16 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.TimeUnit
 
-// Configuration class to define application beans and configurations
+/**
+ * Configuration class to define application beans and configurations.
+ */
 @Configuration
 class AppConfig {
 
-    // Bean definition for OkHttpClient with customized timeouts
+    /**
+     * Bean definition for OkHttpClient with customized timeouts.
+     * @return OkHttpClient instance
+     */
     @Bean
     fun okHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
