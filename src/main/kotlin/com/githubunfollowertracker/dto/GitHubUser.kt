@@ -1,3 +1,5 @@
+package com.githubunfollowertracker.dto
+
 /**
  * Data class representing GitHub user information retrieved from the GitHub API.
  *
