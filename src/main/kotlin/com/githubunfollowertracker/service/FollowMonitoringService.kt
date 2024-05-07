@@ -24,8 +24,8 @@ class FollowMonitoringService(private val httpClient: OkHttpClient, private val 
      * @param credentials The OAuth2 access token for authentication
      * @return The list of GitHub users being followed
      */
-    fun getFollowingList(userName: String, credentials: String): List<GitHubUser> {
-        val url = "$githubApiUrl/users/$userName/following"
+    fun getFollowingList(userName: String, credentials: String, page: Int): List<GitHubUser> {
+        val url = "$githubApiUrl/users/$userName/following?per_page=12&page=$page"
         return makeApiCall(url, credentials)
     }
 
@@ -36,8 +36,8 @@ class FollowMonitoringService(private val httpClient: OkHttpClient, private val 
      * @param credentials The OAuth2 access token for authentication
      * @return The list of GitHub users who are followers
      */
-    fun getFollowersList(userName: String, credentials: String): List<GitHubUser> {
-        val url = "$githubApiUrl/users/$userName/followers"
+    fun getFollowersList(userName: String, credentials: String, page: Int): List<GitHubUser> {
+        val url = "$githubApiUrl/users/$userName/followers?per_page=12&page=$page"
         return makeApiCall(url, credentials)
     }
 

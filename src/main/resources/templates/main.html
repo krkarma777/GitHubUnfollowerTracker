@@ -5,75 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unfollow Users</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
-            color: #333;
+        @font-face {
+            font-family: 'intelone-mono-font-family-regular';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-1@1.1/intelone-mono-font-family-regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
         }
 
-        h1 {
-            color: #555;
+        body {
+            font-family: 'intelone-mono-font-family-regular', monospace;
+            background-color: #0f0f0f;
+            margin: 0;
+            padding: 20px;
+            color: #33ff33;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        h1, h2 {
+            color: white;
+            text-shadow: 0 0 5px #00ff00;
         }
 
         .container {
-            width: 80%;
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
+            max-width: 800px;
+            margin: 50px auto;
+            background: #121212;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
+            border-radius: 10px;
         }
 
         p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #666;
+            font-size: 18px;
+            line-height: 1.7;
+            color: #66ff66;
         }
 
         button {
-            background-color: #4CAF50;
-            color: white;
+            background-color: #222;
+            color: #00ff00;
             padding: 10px 20px;
-            border: none;
+            border: 1px solid #33ff33;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 18px;
-            transition: background-color 0.3s;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.2s;
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #333;
+            transform: scale(1.05);
         }
 
-        /* Added styles */
-        .follower-list, .following-list {
-            margin-top: 20px;
-            border-top: 2px solid #ddd;
-            padding-top: 20px;
-        }
-
-        .follower-list h2, .following-list h2 {
-            color: #555;
-        }
-
-        /* Added styles for user cards */
         .user-cards {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            padding: 20px 0;
         }
 
         .user-card {
             text-align: center;
-            width: 150px;
-            margin: 10px;
             padding: 10px;
-            background-color: #f9f9f9;
+            background-color: #262626;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 255, 0, 0.3);
         }
 
         .avatar {
@@ -84,48 +80,111 @@
         }
 
         .username {
-            font-weight: bold;
-            color: #333;
+            font-weight: 500;
+            color: white;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .center-align {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .center-align button {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        .center-text {
+            text-align: center;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Manage Your Followers</h1>
+    <h1 class="center-text">Manage Your Followers</h1>
     <p>This tool helps you manage your GitHub following list by unfollowing users who do not reciprocate the follow,
         keeping your network optimized and relevant.</p>
     <form th:action="@{/unfollow}" method="post">
-        <button type="submit">Clean Up Followers</button>
+        <button style="color: red; width: 100%" type="submit">Clean Up Followers</button>
     </form>
 
     <!-- Display following list -->
     <div class="following-list">
-        <h2>Following List</h2>
-        <div class="user-cards">
-            <!-- Use Thymeleaf to iterate over the following list -->
-            <div class="user-card" th:each="user : ${following}">
-                <a th:href="@{'https://github.com/' + ${user.login}}">
-                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
-                    <span class="username" th:text="${user.login}"></span>
-                </a>
-            </div>
-        </div>
+        <h2 class="center-text">Following List</h2>
     </div>
 
     <!-- Display followers list -->
     <div class="follower-list">
-        <h2>Followers List</h2>
-        <div class="user-cards">
-            <!-- Use Thymeleaf to iterate over the followers list -->
-            <div class="user-card" th:each="user : ${followers}">
-                <a th:href="@{'https://github.com/' + ${user.login}}">
-                    <img th:src="${user.avatar_url}" alt="User Avatar" class="avatar">
-                    <span class="username" th:text="${user.login}"></span>
-                </a>
-            </div>
-        </div>
+        <h2 class="center-text">Followers List</h2>
     </div>
-
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const followersContainer = document.querySelector('.follower-list');
+        const followingContainer = document.querySelector('.following-list');
+        let currentPage = 1;
+
+        function fetchFollowers(page) {
+            fetch(`/follower?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayUsers(data, followersContainer, 'Followers');
+                    currentPage = page;
+                });
+        }
+
+        function fetchFollowing(page) {
+            fetch(`/following?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    displayUsers(data, followingContainer, 'Following');
+                    currentPage = page;
+                });
+        }
+
+        function displayUsers(users, container, listType) {
+            container.innerHTML = `<h2 class="center-text">${listType} List</h2>`;
+            const userCards = document.createElement('div');
+            userCards.className = 'user-cards';
+            users.forEach(user => {
+                const userCard = document.createElement('div');
+                userCard.className = 'user-card';
+                userCard.innerHTML = `
+                <a href="https://github.com/${user.login}"><img class="avatar" src="${user.avatar_url}" alt="User Avatar">
+                <div class="username">${user.login}</div></a>
+            `;
+                userCards.appendChild(userCard);
+            });
+            container.appendChild(userCards);
+
+            // Check if pagination is necessary
+            addPagination(container, users.length, listType);
+        }
+
+        function addPagination(container, count, listType) {
+            if (count >= 9) {
+                const pagination = document.createElement('div');
+                pagination.className = 'center-align';
+                pagination.innerHTML = `
+                    <button onclick="changePage(-1, '${listType}')">Previous</button>
+                    <button onclick="changePage(1, '${listType}')">Next</button>
+                `;
+                container.appendChild(pagination);
+            }
+        }
+
+        window.changePage = function (delta, listType) {
+            const newPage = currentPage + delta;
+            if (newPage < 1) return; // Prevent going to invalid page numbers
+            listType === 'Followers' ? fetchFollowers(newPage) : fetchFollowing(newPage);
+        };
+
+        // Initial fetch
+        fetchFollowers(1);
+        fetchFollowing(1);
+    });
+</script>
 </body>
 </html>
