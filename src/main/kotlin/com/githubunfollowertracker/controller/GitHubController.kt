@@ -15,20 +15,23 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * Controller to manage GitHub user following and unfollowing.
+ * This controller manages operations related to GitHub user interactions,
+ * specifically focusing on following and unfollowing users.
  */
 @RestController
 class GitHubController @Autowired constructor(
-    private val gitHubService: GitHubService, // Service to handle GitHub API interactions
-    private val getAccessTokenService: GetAccessTokenService, // Service to retrieve OAuth2 access token
-    private val followMonitoringService: FollowMonitoringService
+    private val gitHubService: GitHubService, // Handles interactions with GitHub API
+    private val getAccessTokenService: GetAccessTokenService, // Retrieves OAuth2 access tokens
+    private val followMonitoringService: FollowMonitoringService // Monitors follow and unfollow activities
 ) {
 
     /**
-     * Endpoint to unfollow users not following back the authenticated user.
-     * @param oAuth2AuthenticationToken Authentication token for OAuth2
-     * @param whiteList Optional whitelist of users to keep following
-     * @return ResponseEntity indicating the result of the operation
+     * Unfollows users who do not reciprocate the follow back to the authenticated user,
+     * considering an optional whitelist of users to remain following.
+     *
+     * @param oAuth2AuthenticationToken Provides the OAuth2 authentication context.
+     * @param whiteList Optional list of usernames to be excluded from unfollowing.
+     * @return A ResponseEntity with the result of the unfollow operation.
      */
     @PostMapping("/unfollow")
     suspend fun unfollow(
@@ -51,22 +54,34 @@ class GitHubController @Autowired constructor(
         ResponseEntity.ok("Unfollowed non-followers successfully.")
     }
 
+    /**
+     * Retrieves a list of followers for the authenticated user.
+     *
+     * @param oAuth2AuthenticationToken Provides the OAuth2 authentication context.
+     * @param page Specifies the pagination index for the followers list.
+     * @return A ResponseEntity containing a list of GitHubUser representing followers.
+     */
     @GetMapping("/follower")
     fun followerList(oAuth2AuthenticationToken: OAuth2AuthenticationToken,
                      @RequestParam page: Int): ResponseEntity<List<GitHubUser>> {
         val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
-        val userName =
-            oAuth2AuthenticationToken.principal.attributes["login"] as String
+        val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
 
         return ResponseEntity.ok(followMonitoringService.getFollowersList(userName, credentials, page))
     }
 
+    /**
+     * Retrieves a list of users that the authenticated user is following.
+     *
+     * @param oAuth2AuthenticationToken Provides the OAuth2 authentication context.
+     * @param page Specifies the pagination index for the following list.
+     * @return A ResponseEntity containing a list of GitHubUser representing users being followed.
+     */
     @GetMapping("/following")
     fun followingList(oAuth2AuthenticationToken: OAuth2AuthenticationToken,
-                     @RequestParam page: Int): ResponseEntity<List<GitHubUser>> {
+                      @RequestParam page: Int): ResponseEntity<List<GitHubUser>> {
         val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
-        val userName =
-            oAuth2AuthenticationToken.principal.attributes["login"] as String
+        val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
 
         return ResponseEntity.ok(followMonitoringService.getFollowingList(userName, credentials, page))
     }
