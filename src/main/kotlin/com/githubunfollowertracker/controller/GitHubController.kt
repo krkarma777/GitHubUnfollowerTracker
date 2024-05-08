@@ -4,6 +4,8 @@ import com.githubunfollowertracker.dto.GitHubUser
 import com.githubunfollowertracker.service.FollowMonitoringService
 import com.githubunfollowertracker.service.GetAccessTokenService
 import com.githubunfollowertracker.service.GitHubService
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
@@ -29,26 +31,24 @@ class GitHubController @Autowired constructor(
      * @return ResponseEntity indicating the result of the operation
      */
     @PostMapping("/unfollow")
-    fun unfollow(
+    suspend fun unfollow(
         oAuth2AuthenticationToken: OAuth2AuthenticationToken,
         @RequestParam(required = false) whiteList: List<String> = listOf()
-    ): ResponseEntity<String> {
-        // Fetch access token
+    ): ResponseEntity<String> = coroutineScope {
         val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
-        // Extract user's login from token
         val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
-        // Fetch list of users the authenticated user is following
+
         val following = gitHubService.fetchAllFollowing(userName, credentials)
-        // Fetch list of followers
         val followers = gitHubService.fetchAllFollowers(userName, credentials)
 
-        // Unfollow users who do not follow back and are not in the whitelist
-        following.filterNot { follower -> followers.any { it == follower } || whiteList.contains(follower) }
+        following.filterNot { it in followers || it in whiteList }
             .forEach { userToUnfollow ->
-                gitHubService.unfollowUser(userName, userToUnfollow, credentials)
+                launch {
+                    gitHubService.unfollowUser(userName, userToUnfollow, credentials)
+                }
             }
 
-        return ResponseEntity.ok("Unfollowed non-followers successfully.")
+        ResponseEntity.ok("Unfollowed non-followers successfully.")
     }
 
     @GetMapping("/follower")
