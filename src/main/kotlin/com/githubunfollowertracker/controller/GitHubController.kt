@@ -42,9 +42,10 @@ class GitHubController @Autowired constructor(
         val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
 
         val following = gitHubService.fetchAllFollowing(userName, credentials)
-        val followers = gitHubService.fetchAllFollowers(userName, credentials)
+        val followers = gitHubService.fetchAllFollowers(userName, credentials).toSet()
+        val whiteListSet = whiteList.toSet()
 
-        following.filterNot { it in followers || it in whiteList }
+        following.filterNot { it in followers || it in whiteListSet }
             .forEach { userToUnfollow ->
                 launch {
                     gitHubService.unfollowUser(userName, userToUnfollow, credentials)
