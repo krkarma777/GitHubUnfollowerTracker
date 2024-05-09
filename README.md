@@ -7,6 +7,36 @@
 
 GitHubUnfollowerTracker is a sleek, web-based application that enables users to effectively manage and monitor their GitHub social connections. Leveraging the GitHub API, it provides real-time insights into follower dynamics, allowing users to identify who has unfollowed them and manage their following list more efficiently. This tool is built using Kotlin and Spring Boot, offering a responsive and user-friendly interface.
 
+===
+
+### Version 2 Release Notes
+
+#### New Features
+- **Whitelist Management**: Users can now specify a whitelist of usernames to exempt from the unfollow process. This is done through a new input field in the Unfollow Users form, which supports comma-separated usernames.
+- **Asynchronous Processing**: Implemented asynchronous processing using Kotlin coroutines. This update includes:
+  - **kotlinx-coroutines-core dependency**: Added for asynchronous processing capabilities.
+  - **kotlinx-coroutines-reactor dependency**: Supports integration with Reactor for combining reactive programming with coroutines.
+  - **Refactored `unfollowUser`**: Now utilizes coroutines to handle asynchronous execution, improving performance when processing multiple unfollow requests simultaneously.
+
+#### Enhancements
+- **Optimized Follower Filtering Logic**: Improved the logic for filtering followers in the unfollow endpoint, enhancing efficiency and response times.
+- **Enhanced Code Documentation**: Updated and expanded the code documentation for the `GitHubController`, making it easier to understand and maintain.
+
+#### Technical Improvements
+- Enhanced the stability and performance of the follower management tools.
+- Improved error handling for rate limit issues with GitHub's API.
+
+### Known Issues
+- No major issues reported in this release. Users experiencing any difficulties should report them for immediate review.
+
+#### Upgrade Notes
+- Users are encouraged to update to the latest version to take advantage of the new features and improvements.
+- Ensure compatibility with existing deployments, especially concerning asynchronous operations and external API integrations.
+
+This release focuses on improving user control over social interactions on GitHub and optimizing backend operations for better performance and usability.
+
+===
+
 ## Features
 
 - **Monitor Unfollowers**: Instantly find out who has stopped following you.
