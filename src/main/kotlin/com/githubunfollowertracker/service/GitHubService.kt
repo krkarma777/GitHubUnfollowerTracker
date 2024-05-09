@@ -2,6 +2,8 @@ package com.githubunfollowertracker.service
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.springframework.beans.factory.annotation.Value
@@ -72,17 +74,14 @@ class GitHubService(private val httpClient: OkHttpClient, private val gson: Gson
      * @param userToUnfollow The username of the user to unfollow
      * @param credentials The access token or credentials for authentication
      */
-    fun unfollowUser(userName: String, userToUnfollow: String, credentials: String) {
-        // Construct URL for unfollowing user
+    suspend fun unfollowUser(userName: String, userToUnfollow: String, credentials: String) = withContext(Dispatchers.IO) {
         val url = "$githubApiUrl/user/following/$userToUnfollow"
-        // Create a DELETE request
         val request = Request.Builder()
             .url(url)
             .delete()
             .header("Authorization", "Bearer $credentials")
             .build()
 
-        // Execute the request and handle response
         httpClient.newCall(request).execute().use { response ->
             if (!response.isSuccessful)
                 throw RuntimeException("Failed to unfollow user: $userToUnfollow, Response: ${response.body?.string()}")
