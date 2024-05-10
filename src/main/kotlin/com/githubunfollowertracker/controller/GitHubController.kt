@@ -4,8 +4,9 @@ import com.githubunfollowertracker.dto.GitHubUser
 import com.githubunfollowertracker.service.FollowMonitoringService
 import com.githubunfollowertracker.service.GetAccessTokenService
 import com.githubunfollowertracker.service.GitHubService
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken
@@ -41,16 +42,16 @@ class GitHubController @Autowired constructor(
         val credentials = getAccessTokenService.getAccessToken(oAuth2AuthenticationToken) as String
         val userName = oAuth2AuthenticationToken.principal.attributes["login"] as String
 
-        val following = gitHubService.fetchAllFollowing(userName, credentials)
+        val following = gitHubService.fetchAllFollowing(userName, credentials).toSet()
         val followers = gitHubService.fetchAllFollowers(userName, credentials).toSet()
         val whiteListSet = whiteList.toSet()
 
-        following.filterNot { it in followers || it in whiteListSet }
-            .forEach { userToUnfollow ->
-                launch {
-                    gitHubService.unfollowUser(userName, userToUnfollow, credentials)
-                }
+        val unfollowActions = following.filterNot { it in followers || it in whiteListSet }.map { userToUnfollow ->
+            async {
+                gitHubService.unfollowUser(userName, userToUnfollow, credentials)
             }
+        }
+        unfollowActions.awaitAll()
 
         ResponseEntity.ok("Unfollowed non-followers successfully.")
     }
