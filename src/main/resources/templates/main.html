@@ -100,9 +100,27 @@
         .center-text {
             text-align: center;
         }
+
+        .spinner {
+            border: 16px solid #f3f3f3;
+            border-top: 16px solid #3498db;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 <body>
+<div id="loadingSpinner" style="display: none; position: fixed; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div class="spinner"></div>
+</div>
 <div class="container">
     <h1 class="center-text">Manage Your Followers</h1>
     <p>This tool helps you manage your GitHub following list by unfollowing users who do not reciprocate the follow,
@@ -127,6 +145,26 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();  // 폼 전송을 방지
+            document.getElementById('loadingSpinner').style.display = 'flex';  // 스피너 표시
+
+            // 폼 데이터 전송
+            fetch('/unfollow', {
+                method: 'POST',
+                body: new FormData(this),
+            })
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);  // 결과를 알림
+                    document.getElementById('loadingSpinner').style.display = 'none';  // 스피너 숨기기
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loadingSpinner').style.display = 'none';  // 에러 발생 시 스피너 숨기기
+                });
+        });
+
         const followersContainer = document.querySelector('.follower-list');
         const followingContainer = document.querySelector('.following-list');
         let currentPage = 1;
