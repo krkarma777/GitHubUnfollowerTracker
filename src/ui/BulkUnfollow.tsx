@@ -37,7 +37,6 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
     const controller = new AbortController();
     abortRef.current = controller;
     runUnfollow(targets, (login) => props.client.unfollow(login), {
-      concurrency: 5,
       signal: controller.signal,
       onProgress: (completed, _total, login) => setProgress({ completed, lastLogin: login }),
     }).then((res) => {
@@ -61,7 +60,13 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
           {targets.length === 0 ? (
             <Text color="green">Nothing to do. esc to go back.</Text>
           ) : (
-            <Text color="yellow">Press y to confirm, esc to cancel.</Text>
+            <>
+              <Text color="gray">
+                Runs one request per second (GitHub secondary rate-limit guidance) — about{' '}
+                {Math.ceil(targets.length / 60)} min.
+              </Text>
+              <Text color="yellow">Press y to confirm, esc to cancel.</Text>
+            </>
           )}
         </Box>
       </Box>

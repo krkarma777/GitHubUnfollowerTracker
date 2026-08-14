@@ -19,13 +19,23 @@ Requires Node.js >= 20 and a real terminal (TTY).
 
 ## Authentication
 
-A GitHub token with the **`user:follow`** scope is resolved in this order:
+A GitHub token is resolved in this order:
 
 1. `GITHUB_TOKEN` environment variable
 2. Token previously saved in `~/.config/ghut/config.json`
 3. `gh auth token` — if you're logged in with the [GitHub CLI](https://cli.github.com), it just works
 4. Interactive prompt — paste a [personal access token](https://github.com/settings/tokens); it's
    saved to the config file with `0600` permissions
+
+Required token permissions:
+
+| Token type | Permission |
+|---|---|
+| Fine-grained PAT (recommended) | **Followers: read and write** |
+| Classic PAT | **`user:follow`** scope |
+
+GitHub Actions' built-in `GITHUB_TOKEN` (an installation access token) does **not** work with the
+follow/unfollow endpoints — use a fine-grained PAT stored as a secret instead.
 
 ## Features
 
@@ -34,7 +44,21 @@ A GitHub token with the **`user:follow`** scope is resolved in this order:
 - **Followers / Following** — full paginated lists
 - **Whitelist** — mark users (★) to protect them from unfollowing; persisted across runs
 - **Bulk unfollow** — unfollow everyone who doesn't follow back (whitelist excluded), with
-  explicit confirmation, live progress, bounded concurrency, and rate-limit-aware early stop
+  explicit confirmation, live progress, and rate-limit-aware early stop
+
+## API compliance
+
+- Requests pin `X-GitHub-Api-Version: 2026-03-10` explicitly (unversioned requests silently fall
+  back to `2022-11-28`).
+- Bulk unfollow serializes DELETE requests with a 1-second gap, per GitHub's
+  [secondary rate limit](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
+  guidance (mutating requests cost 5 points, ~900 points/min budget). Expect ~1 minute per 60
+  unfollows.
+- On 403/429 the run stops early and reports the reset time (`Retry-After` /
+  `x-ratelimit-reset`).
+- Follow/unfollow automation at scale is restricted by GitHub's
+  [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies);
+  this tool only acts on your explicit confirmation.
 
 ## Keybindings
 

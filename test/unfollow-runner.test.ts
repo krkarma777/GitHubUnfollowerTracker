@@ -1,10 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RateLimitError } from '../src/core/github.js';
 import { runUnfollow } from '../src/core/unfollow-runner.js';
 
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('runUnfollow', () => {
+  it('waits delayMs between consecutive requests (serialized by default)', async () => {
+    vi.useFakeTimers();
+    const calls: string[] = [];
+
+    const promise = runUnfollow(['a', 'b'], async (login) => {
+      calls.push(login);
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toEqual(['a']);
+    await vi.advanceTimersByTimeAsync(999);
+    expect(calls).toEqual(['a']);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(calls).toEqual(['a', 'b']);
+
+    const result = await promise;
+    expect(result.done).toEqual(['a', 'b']);
+  });
+
   it('unfollows every target and reports progress', async () => {
     const calls: string[] = [];
     const progress: number[] = [];
@@ -14,7 +37,7 @@ describe('runUnfollow', () => {
       async (login) => {
         calls.push(login);
       },
-      { concurrency: 2, onProgress: (done, total) => progress.push(done / total) },
+      { concurrency: 2, delayMs: 0, onProgress: (done, total) => progress.push(done / total) },
     );
 
     expect(calls.sort()).toEqual(['a', 'b', 'c']);
@@ -35,7 +58,7 @@ describe('runUnfollow', () => {
         await tick();
         active--;
       },
-      { concurrency: 2 },
+      { concurrency: 2, delayMs: 0 },
     );
 
     expect(peak).toBeLessThanOrEqual(2);
@@ -47,7 +70,7 @@ describe('runUnfollow', () => {
       async (login) => {
         if (login === 'bad') throw new Error('boom');
       },
-      { concurrency: 1 },
+      { concurrency: 1, delayMs: 0 },
     );
 
     expect(result.done.sort()).toEqual(['a', 'c']);
@@ -63,7 +86,7 @@ describe('runUnfollow', () => {
         calls.push(login);
         if (login === 'b') throw new RateLimitError('rate limited', null);
       },
-      { concurrency: 1 },
+      { concurrency: 1, delayMs: 0 },
     );
 
     expect(calls).toEqual(['a', 'b']);
@@ -82,7 +105,7 @@ describe('runUnfollow', () => {
         if (login === 'a') controller.abort();
         await tick();
       },
-      { concurrency: 1, signal: controller.signal },
+      { concurrency: 1, delayMs: 0, signal: controller.signal },
     );
 
     expect(calls).toEqual(['a']);

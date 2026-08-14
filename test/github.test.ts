@@ -77,6 +77,19 @@ describe('GitHubClient', () => {
     expect((err as RateLimitError).resetAt).toEqual(new Date(1755150000 * 1000));
   });
 
+  it('prefers Retry-After over x-ratelimit-reset for secondary limits', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(httpError(403, { 'retry-after': '60' }));
+    const client = new GitHubClient(octokit as never);
+    const before = Date.now();
+
+    const err = await client.unfollow('dave').catch((e) => e);
+    expect(err).toBeInstanceOf(RateLimitError);
+    const resetMs = (err as RateLimitError).resetAt!.getTime() - before;
+    expect(resetMs).toBeGreaterThanOrEqual(59_000);
+    expect(resetMs).toBeLessThanOrEqual(61_000);
+  });
+
   it('passes through other errors untouched', async () => {
     const octokit = fakeOctokit();
     octokit.rest.users.unfollow.mockRejectedValue(httpError(500));
