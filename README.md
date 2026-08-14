@@ -164,6 +164,15 @@ node dist/cli.js
 Architecture: pure logic in `src/core/` (no UI imports, fully unit-tested), Ink components in
 `src/ui/`. Every IO seam is injectable, so tests never touch the network.
 
+## Contributing
+
+Issues and pull requests are welcome. [CONTRIBUTING.md](./CONTRIBUTING.md) covers the architecture
+tour, conventions, and how to verify your token against the API without touching your follow graph.
+
+Found a security issue? Please [report it privately](./SECURITY.md) rather than opening an issue.
+Participation is governed by the [Code of Conduct](./CODE_OF_CONDUCT.md).
+Version history lives in [CHANGELOG.md](./CHANGELOG.md).
+
 ## v3.0.0
 
 Full rewrite from a Kotlin/Spring Boot web app to a TypeScript + Ink TUI on npm.

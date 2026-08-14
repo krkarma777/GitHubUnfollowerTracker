@@ -1,0 +1,114 @@
+name: Bug report
+description: Something doesn't work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report.
+
+        **Never paste a GitHub token, even a revoked one.** If your report involves a token,
+        describe its type and scopes instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: |
+        Bulk unfollow stopped after 3 users and reported "rate limited", but my quota was untouched.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npx github-unfollower`
+        2. Select "Bulk unfollow non-followers"
+        3. Press y
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `ghut --version` (or `npx github-unfollower --version`)
+      placeholder: "3.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Output of `node --version`
+      placeholder: "v22.11.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows (WSL)
+        - Windows (native)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: token-source
+    attributes:
+      label: Where did the token come from?
+      description: The resolution chain stops at the first match, in this order
+      options:
+        - GITHUB_TOKEN environment variable
+        - Saved in ~/.config/ghut/config.json
+        - gh CLI (`gh auth token`)
+        - Pasted at the interactive prompt
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: token-type
+    attributes:
+      label: What kind of token is it?
+      options:
+        - gh CLI OAuth token
+        - Fine-grained personal access token
+        - Classic personal access token
+        - GitHub App / Actions token
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: scopes
+    attributes:
+      label: Token permissions
+      description: |
+        For classic and gh CLI tokens, ask the API directly — this reports the scopes of the
+        token the tool actually used, which `gh auth status` won't if the token came from
+        somewhere other than gh:
+
+        ```
+        curl -sI -H "Authorization: Bearer $YOUR_TOKEN" https://api.github.com/user | grep -i x-oauth-scopes
+        ```
+
+        Fine-grained tokens report no scopes — tell us the Followers permission setting instead.
+
+        **Paste the header value, never the token.**
+      placeholder: "x-oauth-scopes: gist, read:org, repo, user:follow"
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Terminal emulator, follower/following counts, screenshots of the TUI

@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a capability or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the situation, not the solution. This usually surfaces a simpler fix.
+      placeholder: |
+        I want to run this in a cron job, but it always launches the interactive TUI.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like it to do?
+      placeholder: |
+        A `--dry-run` flag that prints the non-followers as JSON and exits.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Including workarounds you're using today
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This stays within the tool's purpose — managing your own GitHub follow graph
+          required: true
+        - label: This doesn't require automating follows/unfollows without explicit user confirmation
+          required: true
