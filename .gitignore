@@ -5,3 +5,7 @@ docs/
 .DS_Store
 .idea/
 .vscode/
+
+# local agent instruction files — process docs stay out of the public history
+CLAUDE.md
+AGENTS.md
