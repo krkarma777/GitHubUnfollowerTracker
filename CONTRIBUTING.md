@@ -27,6 +27,7 @@ src/
   cli.tsx                  flag dispatch, TTY guard, renders <App/>
   core/                    pure logic — unit tested, no React
     args.ts                argv → mode (tui / dry-run / help / version)
+    run.ts                 CLI dispatch → exit code, or 'tui' for the caller
     report.ts              read-only follow-graph report + text/JSON formatting
     relations.ts           set diff: mutuals / notFollowingBack / fans
     config.ts              ~/.config/ghut/config.json (0600)
@@ -104,6 +105,15 @@ node dist/cli.js --json | jq .
 
 This is the safe way to check a change to `github.ts`, `relations.ts`, or `report.ts` against your
 real account.
+
+### End-to-end tests
+
+`test/cli-process.test.ts` runs the **built** binary against a stub GitHub API over a real pipe,
+using `GHUT_API_URL`. That combination matters: stdout behaves differently on a pipe than on a
+file, and bugs there are invisible to in-process tests. `npm test` builds first, so `dist/` is
+always current.
+
+`GHUT_API_URL` also points the tool at a GitHub Enterprise Server instance.
 
 ### What this doesn't cover
 

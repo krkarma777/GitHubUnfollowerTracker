@@ -27,7 +27,7 @@ describe('buildReport', () => {
   it('assembles viewer, relations, and whitelist-filtered targets', async () => {
     const client = fakeClient(['alice', 'bob'], ['alice', 'dave', 'erin']);
 
-    const report = await buildReport(client as never, ['erin']);
+    const report = await buildReport(client, ['erin']);
 
     expect(report.viewer.login).toBe('me');
     expect(report.relations.notFollowingBack).toEqual(['dave', 'erin']);
@@ -40,7 +40,7 @@ describe('buildReport', () => {
     const client = fakeClient(['alice'], ['alice', 'dave']);
 
     // `ghost` is whitelisted but not someone we follow, so it is not shielding anything.
-    const report = await buildReport(client as never, ['ghost']);
+    const report = await buildReport(client, ['ghost']);
 
     expect(report.whitelisted).toEqual([]);
     expect(report.unfollowTargets).toEqual(['dave']);
@@ -49,7 +49,7 @@ describe('buildReport', () => {
   it('never calls unfollow', async () => {
     const client = { ...fakeClient(['a'], ['a', 'b']), unfollow: vi.fn() };
 
-    await buildReport(client as never, []);
+    await buildReport(client, []);
 
     expect(client.unfollow).not.toHaveBeenCalled();
   });
@@ -89,6 +89,7 @@ describe('formatReportJson', () => {
 
     expect(parsed).toEqual({
       login: 'me',
+      canUnfollow: true,
       counts: {
         followers: 2,
         following: 3,

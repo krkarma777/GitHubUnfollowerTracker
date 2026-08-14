@@ -89,6 +89,15 @@ This was a dry run. Nothing was changed.
 ghut --json | jq '.wouldUnfollow | length'
 ```
 
+Errors are printed as plain text on stderr, not JSON. Check the exit code:
+
+| Code | Meaning |
+|---|---|
+| `0` | Success |
+| `1` | Couldn't run — no token, authentication failed, network error |
+| `2` | Usage error — unrecognised option |
+| `3` | Rate limited by GitHub (the reset time is printed) |
+
 ## Authentication
 
 Already using the [GitHub CLI](https://cli.github.com)? Then it just works — no setup at all.

@@ -1,12 +1,18 @@
 import { GitHubClient, Viewer } from './github.js';
 import { computeRelations, filterUnfollowTargets, Relations } from './relations.js';
 
+/** The read-only slice of GitHubClient a report needs — no unfollow in sight. */
+export type ReadOnlyClient = Pick<
+  GitHubClient,
+  'getViewer' | 'fetchAllFollowers' | 'fetchAllFollowing'
+>;
+
 export interface FollowReport {
   viewer: Viewer;
   followers: string[];
   following: string[];
   relations: Relations;
-  /** Whitelist entries that are actually shielding someone from being unfollowed. */
+  /** The accounts a whitelist entry is shielding, in GitHub's own casing. */
   whitelisted: string[];
   unfollowTargets: string[];
 }
@@ -16,7 +22,7 @@ export interface FollowReport {
  * unfollow would touch. Read-only: it never issues a DELETE.
  */
 export async function buildReport(
-  client: GitHubClient,
+  client: ReadOnlyClient,
   whitelist: string[],
 ): Promise<FollowReport> {
   const viewer = await client.getViewer();
@@ -49,7 +55,11 @@ export function formatReportText(report: FollowReport): string {
   }
 
   if (unfollowTargets.length === 0) {
-    lines.push('Nothing to unfollow.');
+    lines.push(
+      whitelisted.length > 0
+        ? `Nothing to unfollow — all ${whitelisted.length} non-followers are whitelisted.`
+        : 'Nothing to unfollow.',
+    );
   } else {
     lines.push(`${unfollowTargets.length} would be unfollowed (${whitelisted.length} whitelisted):`);
     lines.push(...unfollowTargets.map((login) => `  ${login}`));
@@ -64,6 +74,7 @@ export function formatReportJson(report: FollowReport): string {
   return JSON.stringify(
     {
       login: viewer.login,
+      canUnfollow: viewer.canUnfollow,
       counts: {
         followers: report.followers.length,
         following: report.following.length,

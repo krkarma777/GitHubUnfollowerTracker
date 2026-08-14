@@ -94,7 +94,10 @@ export class GitHubClient {
   constructor(private readonly octokit: Octokit) {}
 
   static withToken(token: string): GitHubClient {
-    const octokit = new Octokit({ auth: token });
+    // GHUT_API_URL points at a GitHub Enterprise Server instance, and lets the
+    // end-to-end tests run the built CLI against a local stub.
+    const baseUrl = process.env.GHUT_API_URL?.trim();
+    const octokit = new Octokit({ auth: token, ...(baseUrl ? { baseUrl } : {}) });
     octokit.hook.before('request', (options) => {
       options.headers['x-github-api-version'] = GITHUB_API_VERSION;
     });
