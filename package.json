@@ -1,7 +1,7 @@
 {
-  "name": "github-unfollower-tracker",
+  "name": "github-unfollower",
   "version": "3.0.0",
-  "description": "Interactive terminal UI to track GitHub unfollowers and bulk-unfollow non-followers, with whitelist support",
+  "description": "Find out who doesn't follow you back on GitHub and bulk-unfollow them from your terminal. Interactive TUI with whitelist, live progress, and rate-limit-safe pacing.",
   "type": "module",
   "bin": {
     "ghut": "dist/cli.js"
@@ -22,13 +22,31 @@
     "type": "git",
     "url": "git+https://github.com/krkarma777/GitHubUnfollowerTracker.git"
   },
+  "homepage": "https://github.com/krkarma777/GitHubUnfollowerTracker#readme",
+  "bugs": {
+    "url": "https://github.com/krkarma777/GitHubUnfollowerTracker/issues"
+  },
   "keywords": [
     "github",
+    "unfollow",
     "unfollower",
-    "tracker",
-    "tui",
+    "unfollowers",
+    "bulk-unfollow",
+    "mass-unfollow",
+    "followers",
+    "following",
+    "non-mutual",
+    "mutual-followers",
+    "who-unfollowed-me",
+    "follower-tracker",
+    "github-api",
+    "github-cli",
+    "octokit",
     "cli",
-    "ink"
+    "tui",
+    "terminal",
+    "ink",
+    "whitelist"
   ],
   "author": "krkarma777",
   "license": "MIT",

@@ -1,96 +1,179 @@
-# GitHub Unfollower Tracker
+# github-unfollower
 
-Interactive terminal UI (TUI) to see who isn't following you back on GitHub, manage a whitelist,
-and bulk-unfollow non-followers — right from your terminal.
+**Find out who doesn't follow you back on GitHub — and bulk-unfollow them from your terminal.**
 
-> v3.0.0 is a full rewrite: the old Kotlin/Spring Boot web app is now a TypeScript npm package
-> built with [Ink](https://github.com/vadimdemedes/ink).
+[![npm version](https://img.shields.io/npm/v/github-unfollower.svg)](https://www.npmjs.com/package/github-unfollower)
+[![npm downloads](https://img.shields.io/npm/dm/github-unfollower.svg)](https://www.npmjs.com/package/github-unfollower)
+[![CI](https://github.com/krkarma777/GitHubUnfollowerTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/krkarma777/GitHubUnfollowerTracker/actions/workflows/ci.yml)
+[![node](https://img.shields.io/node/v/github-unfollower.svg)](https://nodejs.org)
+[![license](https://img.shields.io/npm/l/github-unfollower.svg)](./LICENSE)
 
-## Usage
+No browser, no OAuth app to register, no data leaves your machine. One command:
 
 ```bash
-npx github-unfollower-tracker
-# or install globally
-npm install -g github-unfollower-tracker
+npx github-unfollower
+```
+
+```
+ GitHub Unfollower Tracker
+ @octocat
+
+ 1379        1154        1154     201                  225    3
+ Followers   Following   Mutual   Not following back   Fans   Whitelist
+
+ ❯ Not following you back
+   Followers
+   Following
+   Fans (you do not follow back)
+   Whitelist
+   Bulk unfollow non-followers
+   Quit
+
+ ↑↓ move · enter select · q quit
+```
+
+---
+
+## Why
+
+GitHub shows you followers and following, but never the difference. Working out who quietly
+unfollowed you means paging through two lists by hand — and unfollowing 200 people means 200
+clicks. This does both in one screen, and unfollows at a pace GitHub is happy with.
+
+- **Safe by default** — nothing is unfollowed without an explicit `y` confirmation
+- **Whitelist** — protect people you want to keep following, even if they never follow back
+- **Rate-limit aware** — one request per second, per GitHub's secondary-limit guidance; stops
+  early and tells you when the limit resets
+- **Cancellable** — `esc` mid-run stops cleanly and reports exactly how far it got
+- **Local only** — your token stays in `~/.config/ghut/config.json` (mode `0600`)
+
+## Install
+
+```bash
+# run without installing
+npx github-unfollower
+
+# or install globally — the command is `ghut`
+npm install -g github-unfollower
 ghut
 ```
 
-Requires Node.js >= 20 and a real terminal (TTY).
+Requires Node.js >= 20 and an interactive terminal (TTY).
+
+```bash
+ghut --help      # usage, auth chain, keybindings
+ghut --version
+```
 
 ## Authentication
 
-A GitHub token is resolved in this order:
+Already using the [GitHub CLI](https://cli.github.com)? Then it just works — no setup at all.
+
+A token is resolved in this order (first match wins):
 
 1. `GITHUB_TOKEN` environment variable
-2. Token previously saved in `~/.config/ghut/config.json`
-3. `gh auth token` — if you're logged in with the [GitHub CLI](https://cli.github.com), it just works
-4. Interactive prompt — paste a [personal access token](https://github.com/settings/tokens); it's
-   saved to the config file with `0600` permissions
+2. Token saved in `~/.config/ghut/config.json`
+3. `gh auth token` — GitHub CLI
+4. Interactive prompt (saved with `0600` permissions)
 
-Required token permissions:
+Your token needs permission to unfollow:
 
-| Token type | Permission |
+| Token type | Required permission |
 |---|---|
-| Fine-grained PAT (recommended) | **Followers: read and write** |
+| GitHub CLI | `gh auth refresh -s user:follow` |
+| Fine-grained PAT | **Followers: read and write** |
 | Classic PAT | **`user:follow`** scope |
 
-GitHub Actions' built-in `GITHUB_TOKEN` (an installation access token) does **not** work with the
-follow/unfollow endpoints — use a fine-grained PAT stored as a secret instead.
+If the token can't unfollow, you're warned on the dashboard *before* you start — not after 200
+failed requests.
 
-## Features
+> GitHub Actions' built-in `GITHUB_TOKEN` is an installation access token and does **not** work
+> with the follow endpoints. Use a fine-grained PAT stored as a secret.
 
-- **Dashboard** — followers / following / mutual / not-following-back / fans counts at a glance
-- **Not following you back** — the list that matters, with per-user unfollow
-- **Followers / Following** — full paginated lists
-- **Whitelist** — mark users (★) to protect them from unfollowing; persisted across runs
-- **Bulk unfollow** — unfollow everyone who doesn't follow back (whitelist excluded), with
-  explicit confirmation, live progress, and rate-limit-aware early stop
+## Screens
 
-## API compliance
-
-- Requests pin `X-GitHub-Api-Version: 2026-03-10` explicitly (unversioned requests silently fall
-  back to `2022-11-28`).
-- Bulk unfollow serializes DELETE requests with a 1-second gap, per GitHub's
-  [secondary rate limit](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
-  guidance (mutating requests cost 5 points, ~900 points/min budget). Expect ~1 minute per 60
-  unfollows.
-- On 403/429 the run stops early and reports the reset time (`Retry-After` /
-  `x-ratelimit-reset`).
-- Follow/unfollow automation at scale is restricted by GitHub's
-  [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies);
-  this tool only acts on your explicit confirmation.
+| Screen | What it does |
+|---|---|
+| **Dashboard** | Followers / following / mutual / not-following-back / fans / whitelist counts |
+| **Not following you back** | The list that matters — unfollow individually or whitelist |
+| **Followers / Following** | Full lists, paginated automatically |
+| **Fans** | People who follow you that you don't follow back |
+| **Whitelist** | Everyone you've protected (marked `★`) |
+| **Bulk unfollow** | Confirm → live progress → summary of done / failed / skipped |
 
 ## Keybindings
 
 | Key | Action |
 |---|---|
 | `↑` `↓` | Move cursor |
-| `enter` | Select menu item |
+| `enter` | Select |
 | `u` | Unfollow highlighted user |
-| `w` | Toggle whitelist for highlighted user |
-| `y` / `esc` | Confirm / cancel bulk unfollow |
-| `esc` | Back to dashboard |
-| `q` | Quit (from dashboard) |
+| `w` | Toggle whitelist (`★`) for highlighted user |
+| `y` | Confirm bulk unfollow |
+| `esc` | Back / cancel a running bulk unfollow |
+| `r` | Retry after a connection error |
+| `q` | Quit |
+
+## FAQ
+
+**How do I see who unfollowed me on GitHub?**
+Run `npx github-unfollower` and open *Not following you back*. It's every account you follow that
+doesn't follow you — which includes everyone who unfollowed you.
+
+**Does it unfollow anyone automatically?**
+No. Bulk unfollow requires you to select it and press `y`. Individual unfollows require `u` on a
+highlighted user.
+
+**How long does unfollowing hundreds of people take?**
+About one minute per 60 users. Requests are deliberately serialized one per second so GitHub's
+secondary rate limit is never tripped.
+
+**Can I undo it?**
+No — GitHub has no bulk re-follow. Whitelist anyone you want to keep (`w`) *before* running a bulk
+unfollow, and check the confirmation count.
+
+**Is my token sent anywhere?**
+No. It's used only for direct calls to `api.github.com` and stored locally at
+`~/.config/ghut/config.json` with `0600` permissions.
+
+**Does it work with organizations / private accounts?**
+It operates on the authenticated user's own follower graph only.
+
+## API compliance
+
+- Pins `X-GitHub-Api-Version: 2026-03-10` (unversioned requests silently fall back to `2022-11-28`)
+- Serializes mutating requests ~1s apart, per GitHub's
+  [secondary rate limit guidance](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
+- Distinguishes permission-denied `403` from genuine rate limits, so a scope problem never
+  masquerades as throttling
+- Paginates at `per_page=100`, so accounts with thousands of follows work fine
+- Automation at scale is restricted by GitHub's
+  [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies);
+  this tool acts only on explicit confirmation
 
 ## Development
 
 ```bash
 npm install
-npm test        # vitest unit tests (core logic)
+npm test        # vitest — core logic + Ink UI
+npm run typecheck
 npm run build   # tsc → dist/
 node dist/cli.js
 ```
 
-## v3.0.0 Release Notes
+Architecture: pure logic in `src/core/` (no UI imports, fully unit-tested), Ink components in
+`src/ui/`. Every IO seam is injectable, so tests never touch the network.
 
-- Full rewrite from Kotlin/Spring Boot web app to a TypeScript + Ink TUI distributed on npm
-- OAuth web login replaced with a CLI-friendly token chain (env var → saved config → gh CLI → prompt)
-- Whitelist is now persistent (config file) instead of a per-request form field
-- Bulk unfollow replaces v2's parallel coroutines with a serialized 1-request-per-second run
-  (GitHub's secondary rate-limit guidance), and adds live progress, cancellation (esc), per-user
-  failure reporting, and rate-limit detection with reset time
-- Warns upfront when the resolved token can't unfollow, instead of failing on every request
+## v3.0.0
+
+Full rewrite from a Kotlin/Spring Boot web app to a TypeScript + Ink TUI on npm.
+
+- Browser OAuth replaced with a CLI-friendly token chain (env → config → `gh` → prompt)
+- Whitelist persists across runs instead of being a per-request form field
+- Bulk unfollow serializes at 1 req/s (was parallel coroutines) and adds live progress,
+  cancellation, per-user failure reporting, and rate-limit detection with reset time
+- Warns upfront when the token lacks unfollow permission
 
 ## License
 
-MIT
+MIT © [krkarma777](https://github.com/krkarma777)
