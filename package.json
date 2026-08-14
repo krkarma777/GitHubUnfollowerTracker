@@ -1,0 +1,46 @@
+{
+  "name": "github-unfollower-tracker",
+  "version": "3.0.0",
+  "description": "Interactive terminal UI to track GitHub unfollowers and bulk-unfollow non-followers, with whitelist support",
+  "type": "module",
+  "bin": {
+    "ghut": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run test && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krkarma777/GitHubUnfollowerTracker.git"
+  },
+  "keywords": [
+    "github",
+    "unfollower",
+    "tracker",
+    "tui",
+    "cli",
+    "ink"
+  ],
+  "author": "krkarma777",
+  "license": "MIT",
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "ink": "^5.0.0",
+    "react": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
