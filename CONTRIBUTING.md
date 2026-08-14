@@ -120,15 +120,35 @@ name automated follow/unfollow as ranking manipulation.
 
 ## Releasing
 
-Maintainers only. This is currently manual; automating it is
-[#11](https://github.com/krkarma777/GitHubUnfollowerTracker/issues/11).
+Maintainers only.
 
-1. Move `## Unreleased` in `CHANGELOG.md` to the new version with a date
-2. `npm version <major|minor|patch>` — this commits and tags
+1. Move `## Unreleased` in `CHANGELOG.md` to the new version with a date, and update the link
+   definitions at the bottom
+2. `npm version <major|minor|patch>` — commits and tags
 3. `git push && git push --tags`
-4. `npm publish` — the `prepublishOnly` hook runs tests and build first. Publishing requires 2FA,
-   so run it in an interactive terminal
-5. `gh release create vX.Y.Z` with notes from the changelog
+
+Pushing the tag triggers [`.github/workflows/release.yml`](./.github/workflows/release.yml), which
+verifies the tag matches `package.json`, runs typecheck/tests/build, and publishes to npm. No
+token, no 2FA prompt — the workflow authenticates with
+[Trusted Publishing](https://docs.npmjs.com/trusted-publishers) over OIDC, and npm attaches a
+provenance attestation automatically.
+
+Then `gh release create vX.Y.Z` with notes from the changelog.
+
+### One-time setup
+
+Trusted publishing has to be registered on npmjs.com before the workflow can publish — on the
+package's **Settings → Trusted Publisher**, with:
+
+| Field | Value |
+|---|---|
+| Organization or user | `krkarma777` |
+| Repository | `GitHubUnfollowerTracker` |
+| Workflow filename | `release.yml` |
+| Environment | *(leave empty)* |
+
+The workflow filename is matched exactly and is case-sensitive — renaming the file breaks
+publishing until this setting is updated.
 
 ## Code of Conduct
 

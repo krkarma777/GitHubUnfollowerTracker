@@ -1,0 +1,51 @@
+name: Release
+
+# Publishes to npm via Trusted Publishing (OIDC) — no NPM_TOKEN secret.
+#
+# The filename of this workflow is registered on npmjs.com as the trusted
+# publisher and is matched exactly, case-sensitively, including the extension.
+# Renaming this file breaks publishing until the setting is updated.
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # mint the OIDC token npm exchanges for publish rights
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing needs npm >= 11.5.1; don't rely on what Node ships with.
+      - name: Ensure npm supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Refuse to publish if the tag disagrees with package.json
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p 'require("./package.json").version')"
+          if [ "$tag" != "$pkg" ]; then
+            echo "Tag $GITHUB_REF_NAME implies $tag but package.json says $pkg." >&2
+            echo "Run 'npm version' so the two match, then retag." >&2
+            exit 1
+          fi
+          echo "Publishing $pkg"
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      # No --provenance flag: attestation is automatic under trusted publishing.
+      - run: npm publish
