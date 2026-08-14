@@ -33,7 +33,12 @@ Authentication (first match wins):
   4. interactive prompt
 
 The token needs the Followers write permission (fine-grained) or the
-user:follow scope (classic).
+user:follow scope (classic). With the GitHub CLI:
+  gh auth refresh -s user:follow
+
+Environment:
+  GITHUB_TOKEN       Token to use, highest precedence
+  GHUT_CONFIG_DIR    Override the config directory (default above)
 
 Keys:
   arrows move · enter select · u unfollow · w whitelist · esc back · q quit`);

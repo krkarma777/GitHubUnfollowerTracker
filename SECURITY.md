@@ -47,5 +47,6 @@ For context when assessing a finding:
 - The token is stored at `~/.config/ghut/config.json` with mode `0600`, in a directory created
   with mode `0700`
 - The token is only ever sent to `api.github.com` via `@octokit/rest`
-- The `gh auth token` fallback uses `execFile` — no shell, so no injection through the environment
-- Nothing is logged to disk, and the token is never printed to the terminal (the prompt masks input)
+- The `gh auth token` fallback uses `execFile` — no shell, so no metacharacter injection through
+  arguments
+- No log files are written, and the token is never printed to the terminal (the prompt masks input)
