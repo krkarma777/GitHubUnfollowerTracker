@@ -92,6 +92,22 @@ function mapError(err: unknown): never {
 
 const noop = () => {};
 
+export type ProgressFn = (loaded: number) => void;
+
+/**
+ * Pass-through page mapper that keeps a running total. Paging through a few
+ * thousand accounts takes seconds, and this is the only signal available
+ * without extra requests.
+ */
+function countPages(onProgress?: ProgressFn) {
+  let loaded = 0;
+  return <T>(response: { data: T[] }): T[] => {
+    loaded += response.data.length;
+    onProgress?.(loaded);
+    return response.data;
+  };
+}
+
 export class GitHubClient {
   constructor(private readonly octokit: Octokit) {}
 
@@ -128,11 +144,13 @@ export class GitHubClient {
     }
   }
 
-  async fetchAllFollowers(): Promise<string[]> {
+  /** `onProgress` receives the running total after each page, for load feedback. */
+  async fetchAllFollowers(onProgress?: ProgressFn): Promise<string[]> {
     try {
       const users = await this.octokit.paginate(
         this.octokit.rest.users.listFollowersForAuthenticatedUser,
         { per_page: 100 },
+        countPages(onProgress),
       );
       return users.map((u) => u.login);
     } catch (err) {
@@ -140,11 +158,12 @@ export class GitHubClient {
     }
   }
 
-  async fetchAllFollowing(): Promise<string[]> {
+  async fetchAllFollowing(onProgress?: ProgressFn): Promise<string[]> {
     try {
       const users = await this.octokit.paginate(
         this.octokit.rest.users.listFollowedByAuthenticatedUser,
         { per_page: 100 },
+        countPages(onProgress),
       );
       return users.map((u) => u.login);
     } catch (err) {

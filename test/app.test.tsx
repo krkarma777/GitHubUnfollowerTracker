@@ -64,6 +64,29 @@ describe('App', () => {
     expect(frame).toContain('Bulk unfollow');
   });
 
+  it('shows a running count while the graph is still loading', async () => {
+    let releaseFollowers: (logins: string[]) => void = () => {};
+    const client = fakeClient({
+      fetchAllFollowers: vi.fn((onProgress?: (n: number) => void) => {
+        onProgress?.(100);
+        onProgress?.(180);
+        return new Promise<string[]>((resolve) => {
+          releaseFollowers = resolve;
+        });
+      }),
+    });
+    const { lastFrame } = renderApp(client);
+    await settle();
+
+    // Still loading: the counts prove the process is alive, not hung.
+    expect(lastFrame()).toContain('Loading');
+    expect(lastFrame()).toContain('180 followers');
+
+    releaseFollowers(['alice']);
+    await settle();
+    expect(lastFrame()).toContain('@me');
+  });
+
   it('drops the user from the following list after an unfollow', async () => {
     const client = fakeClient();
     const { lastFrame, stdin } = renderApp(client);
