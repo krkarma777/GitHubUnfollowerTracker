@@ -65,6 +65,30 @@ ghut --help      # usage, auth chain, keybindings
 ghut --version
 ```
 
+### Preview without changing anything
+
+`--dry-run` shows exactly who a bulk unfollow would touch, then exits. It never issues a single
+unfollow, and it doesn't need a terminal — so it works in scripts and CI.
+
+```bash
+$ ghut --dry-run
+@octocat — 1379 followers, 1355 following
+1154 mutual · 201 not following back · 225 fans
+
+198 would be unfollowed (3 whitelisted):
+  colltoaction
+  mervick
+  ...
+
+This was a dry run. Nothing was changed.
+```
+
+`--json` gives the same report as machine-readable output:
+
+```bash
+ghut --json | jq '.wouldUnfollow | length'
+```
+
 ## Authentication
 
 Already using the [GitHub CLI](https://cli.github.com)? Then it just works — no setup at all.
