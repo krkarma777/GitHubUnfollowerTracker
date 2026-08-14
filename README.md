@@ -1,125 +1,179 @@
-![image](https://github.com/krkarma777/GitHubUnfollowerTracker/assets/149022496/bc8a1f23-b332-4320-92a3-0b4533ed4499)
+# github-unfollower
 
+**Find out who doesn't follow you back on GitHub — and bulk-unfollow them from your terminal.**
 
-# GitHubUnfollowerTracker
+[![npm version](https://img.shields.io/npm/v/github-unfollower.svg)](https://www.npmjs.com/package/github-unfollower)
+[![npm downloads](https://img.shields.io/npm/dm/github-unfollower.svg)](https://www.npmjs.com/package/github-unfollower)
+[![CI](https://github.com/krkarma777/GitHubUnfollowerTracker/actions/workflows/ci.yml/badge.svg)](https://github.com/krkarma777/GitHubUnfollowerTracker/actions/workflows/ci.yml)
+[![node](https://img.shields.io/node/v/github-unfollower.svg)](https://nodejs.org)
+[![license](https://img.shields.io/npm/l/github-unfollower.svg)](./LICENSE)
 
-## Project Description
+No browser, no OAuth app to register, no data leaves your machine. One command:
 
-GitHubUnfollowerTracker is a sleek, web-based application that enables users to effectively manage and monitor their GitHub social connections. Leveraging the GitHub API, it provides real-time insights into follower dynamics, allowing users to identify who has unfollowed them and manage their following list more efficiently. This tool is built using Kotlin and Spring Boot, offering a responsive and user-friendly interface.
+```bash
+npx github-unfollower
+```
 
-===
+```
+ GitHub Unfollower Tracker
+ @octocat
 
-### Version 2 Release Notes
+ 1379        1154        1154     201                  225    3
+ Followers   Following   Mutual   Not following back   Fans   Whitelist
 
-#### New Features
-- **Whitelist Management**: Users can now specify a whitelist of usernames to exempt from the unfollow process. This is done through a new input field in the Unfollow Users form, which supports comma-separated usernames.
-- **Asynchronous Processing**: Implemented asynchronous processing using Kotlin coroutines. This update includes:
-  - **kotlinx-coroutines-core dependency**: Added for asynchronous processing capabilities.
-  - **kotlinx-coroutines-reactor dependency**: Supports integration with Reactor for combining reactive programming with coroutines.
-  - **Refactored `unfollowUser`**: Now utilizes coroutines to handle asynchronous execution, improving performance when processing multiple unfollow requests simultaneously.
+ ❯ Not following you back
+   Followers
+   Following
+   Fans (you do not follow back)
+   Whitelist
+   Bulk unfollow non-followers
+   Quit
 
-#### Enhancements
-- **Optimized Follower Filtering Logic**: Improved the logic for filtering followers in the unfollow endpoint, enhancing efficiency and response times.
-- **Enhanced Code Documentation**: Updated and expanded the code documentation for the `GitHubController`, making it easier to understand and maintain.
+ ↑↓ move · enter select · q quit
+```
 
-#### Technical Improvements
-- Enhanced the stability and performance of the follower management tools.
-- Improved error handling for rate limit issues with GitHub's API.
+---
 
-### Known Issues
-- No major issues reported in this release. Users experiencing any difficulties should report them for immediate review.
+## Why
 
-#### Upgrade Notes
-- Users are encouraged to update to the latest version to take advantage of the new features and improvements.
-- Ensure compatibility with existing deployments, especially concerning asynchronous operations and external API integrations.
+GitHub shows you followers and following, but never the difference. Working out who quietly
+unfollowed you means paging through two lists by hand — and unfollowing 200 people means 200
+clicks. This does both in one screen, and unfollows at a pace GitHub is happy with.
 
-This release focuses on improving user control over social interactions on GitHub and optimizing backend operations for better performance and usability.
+- **Safe by default** — nothing is unfollowed without an explicit `y` confirmation
+- **Whitelist** — protect people you want to keep following, even if they never follow back
+- **Rate-limit aware** — one request per second, per GitHub's secondary-limit guidance; stops
+  early and tells you when the limit resets
+- **Cancellable** — `esc` mid-run stops cleanly and reports exactly how far it got
+- **Local only** — your token stays in `~/.config/ghut/config.json` (mode `0600`)
 
-===
+## Install
 
-## Features
+```bash
+# run without installing
+npx github-unfollower
 
-- **Monitor Unfollowers**: Instantly find out who has stopped following you.
-- **Manage Following List**: View and manage your current GitHub following list.
-- **Automatic Updates**: Stay informed with automatic updates reflecting any changes in your social graph.
-- **Enhanced User Interface**: Enjoy a modern interface that simplifies navigation and enhances user interaction.
+# or install globally — the command is `ghut`
+npm install -g github-unfollower
+ghut
+```
 
-## Getting Started
+Requires Node.js >= 20 and an interactive terminal (TTY).
 
-These instructions will guide you through setting up the project on your local machine for development and testing purposes.
+```bash
+ghut --help      # usage, auth chain, keybindings
+ghut --version
+```
 
-### Prerequisites
+## Authentication
 
-- JDK 17 or newer
-- Spring Boot 3.2.5
-- Gradle or Maven as your build tool
-- GitHub API credentials
+Already using the [GitHub CLI](https://cli.github.com)? Then it just works — no setup at all.
 
-### Installation
+A token is resolved in this order (first match wins):
 
-1. **Clone the repository:**
+1. `GITHUB_TOKEN` environment variable
+2. Token saved in `~/.config/ghut/config.json`
+3. `gh auth token` — GitHub CLI
+4. Interactive prompt (saved with `0600` permissions)
 
-   ```bash
-   git clone https://github.com/yourusername/GitHubUnfollowerTracker.git
-   cd GitHubUnfollowerTracker
-   ```
+Your token needs permission to unfollow:
 
-2. **Set up application properties:**
+| Token type | Required permission |
+|---|---|
+| GitHub CLI | `gh auth refresh -s user:follow` |
+| Fine-grained PAT | **Followers: read and write** |
+| Classic PAT | **`user:follow`** scope |
 
-   Modify `src/main/resources/application-dev.properties` to include your GitHub API credentials:
+If the token can't unfollow, you're warned on the dashboard *before* you start — not after 200
+failed requests.
 
-   ```properties
-   github.api.url=https://api.github.com
-   
-   # OAuth2 Client Configuration
-   spring.security.oauth2.client.registration.github.client-id={your-client-id}
-   spring.security.oauth2.client.registration.github.client-secret={your-client-secret}
-   spring.security.oauth2.client.registration.github.scope=read:user, user:email, user:follow
-   ```
+> GitHub Actions' built-in `GITHUB_TOKEN` is an installation access token and does **not** work
+> with the follow endpoints. Use a fine-grained PAT stored as a secret.
 
-3. **Build the project:**
+## Screens
 
-   Using Gradle:
+| Screen | What it does |
+|---|---|
+| **Dashboard** | Followers / following / mutual / not-following-back / fans / whitelist counts |
+| **Not following you back** | The list that matters — unfollow individually or whitelist |
+| **Followers / Following** | Full lists, paginated automatically |
+| **Fans** | People who follow you that you don't follow back |
+| **Whitelist** | Everyone you've protected (marked `★`) |
+| **Bulk unfollow** | Confirm → live progress → summary of done / failed / skipped |
 
-   ```bash
-   ./gradlew build
-   ```
+## Keybindings
 
-   Or Maven:
+| Key | Action |
+|---|---|
+| `↑` `↓` | Move cursor |
+| `enter` | Select |
+| `u` | Unfollow highlighted user |
+| `w` | Toggle whitelist (`★`) for highlighted user |
+| `y` | Confirm bulk unfollow |
+| `esc` | Back / cancel a running bulk unfollow |
+| `r` | Retry after a connection error |
+| `q` | Quit |
 
-   ```bash
-   mvn clean install
-   ```
+## FAQ
 
-4. **Run the application:**
+**How do I see who unfollowed me on GitHub?**
+Run `npx github-unfollower` and open *Not following you back*. It's every account you follow that
+doesn't follow you — which includes everyone who unfollowed you.
 
-   ```bash
-   ./gradlew bootRun
-   ```
+**Does it unfollow anyone automatically?**
+No. Bulk unfollow requires you to select it and press `y`. Individual unfollows require `u` on a
+highlighted user.
 
-   Or with Maven:
+**How long does unfollowing hundreds of people take?**
+About one minute per 60 users. Requests are deliberately serialized one per second so GitHub's
+secondary rate limit is never tripped.
 
-   ```bash
-   mvn spring-boot:run
-   ```
+**Can I undo it?**
+No — GitHub has no bulk re-follow. Whitelist anyone you want to keep (`w`) *before* running a bulk
+unfollow, and check the confirmation count.
 
-   Visit `http://localhost:8090` in your browser.
+**Is my token sent anywhere?**
+No. It's used only for direct calls to `api.github.com` and stored locally at
+`~/.config/ghut/config.json` with `0600` permissions.
 
-## Usage
+**Does it work with organizations / private accounts?**
+It operates on the authenticated user's own follower graph only.
 
-Access the application by navigating to `http://localhost:8090` in your browser. Sign in using your GitHub credentials to authorize the application and start managing your follower and following lists.
+## API compliance
 
-## Contributing
+- Pins `X-GitHub-Api-Version: 2026-03-10` (unversioned requests silently fall back to `2022-11-28`)
+- Serializes mutating requests ~1s apart, per GitHub's
+  [secondary rate limit guidance](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
+- Distinguishes permission-denied `403` from genuine rate limits, so a scope problem never
+  masquerades as throttling
+- Paginates at `per_page=100`, so accounts with thousands of follows work fine
+- Automation at scale is restricted by GitHub's
+  [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies);
+  this tool acts only on explicit confirmation
 
-Contributions are welcome and greatly appreciated. Here’s how you can contribute:
+## Development
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+```bash
+npm install
+npm test        # vitest — core logic + Ink UI
+npm run typecheck
+npm run build   # tsc → dist/
+node dist/cli.js
+```
 
-## Acknowledgments
+Architecture: pure logic in `src/core/` (no UI imports, fully unit-tested), Ink components in
+`src/ui/`. Every IO seam is injectable, so tests never touch the network.
 
-- Hat tip to GitHub for the API used in this application.
-- A huge thank you to all contributors and the open-source community for continuous support.
+## v3.0.0
+
+Full rewrite from a Kotlin/Spring Boot web app to a TypeScript + Ink TUI on npm.
+
+- Browser OAuth replaced with a CLI-friendly token chain (env → config → `gh` → prompt)
+- Whitelist persists across runs instead of being a per-request form field
+- Bulk unfollow serializes at 1 req/s (was parallel coroutines) and adds live progress,
+  cancellation, per-user failure reporting, and rate-limit detection with reset time
+- Warns upfront when the token lacks unfollow permission
+
+## License
+
+MIT © [krkarma777](https://github.com/krkarma777)
