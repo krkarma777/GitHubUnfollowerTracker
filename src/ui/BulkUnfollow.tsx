@@ -1,5 +1,5 @@
 import { Box, Text, useInput } from 'ink';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { GitHubClient } from '../core/github.js';
 import { filterUnfollowTargets } from '../core/relations.js';
 import { runUnfollow, UnfollowResult } from '../core/unfollow-runner.js';
@@ -21,6 +21,11 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
   const [progress, setProgress] = useState({ completed: 0, lastLogin: '' });
   const [result, setResult] = useState<UnfollowResult | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Ctrl+C unmounts the Ink tree without ending the process, and the runner's
+  // pending timers keep the event loop alive — so without this the run carries
+  // on issuing irreversible unfollows with no UI attached.
+  useEffect(() => () => abortRef.current?.abort(), []);
   // Snapshot at start: props change under us once onDone updates the graph.
   const runTargetsRef = useRef<string[]>([]);
 
