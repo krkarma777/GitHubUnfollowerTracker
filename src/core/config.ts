@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -35,5 +35,7 @@ export class ConfigStore {
   save(config: Config): void {
     mkdirSync(this.dir, { recursive: true, mode: 0o700 });
     writeFileSync(this.filePath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+    // `mode` above only applies on creation; tighten a pre-existing loose file.
+    chmodSync(this.filePath, 0o600);
   }
 }

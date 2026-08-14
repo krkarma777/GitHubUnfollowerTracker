@@ -32,7 +32,8 @@ export class RateLimitError extends Error {
 
 interface HttpErrorLike {
   status?: number;
-  response?: { headers?: Record<string, string> };
+  message?: string;
+  response?: { headers?: Record<string, string>; data?: { message?: string } };
 }
 
 /**
@@ -60,9 +61,25 @@ function mapError(err: unknown): never {
   }
   if (httpErr?.status === 403 || httpErr?.status === 429) {
     const headers = httpErr.response?.headers ?? {};
-    // Secondary rate limits signal via Retry-After (seconds); primary via x-ratelimit-reset (epoch).
     const retryAfter = headers['retry-after'];
     const reset = headers['x-ratelimit-reset'];
+    const detail = httpErr.response?.data?.message ?? httpErr.message ?? '';
+
+    // A 403 is only a rate limit when GitHub says so. Fine-grained tokens
+    // missing Followers:write also return 403 — with the quota untouched.
+    const isRateLimit =
+      httpErr.status === 429 ||
+      retryAfter != null ||
+      headers['x-ratelimit-remaining'] === '0' ||
+      /rate limit/i.test(detail);
+
+    if (!isRateLimit) {
+      throw new PermissionError(
+        `GitHub refused the request (403): ${detail || 'no detail'}. Your token likely lacks the Followers write permission (user:follow scope on classic tokens).`,
+      );
+    }
+
+    // Secondary limits signal via Retry-After (seconds); primary via x-ratelimit-reset (epoch).
     const resetAt = retryAfter
       ? new Date(Date.now() + Number(retryAfter) * 1000)
       : reset

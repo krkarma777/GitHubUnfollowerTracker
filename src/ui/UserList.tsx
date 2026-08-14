@@ -28,8 +28,14 @@ export function UserList(props: UserListProps) {
     if (busy) return;
     if (key.escape) props.onBack();
     if (count === 0) return;
-    if (key.upArrow) setCursor(Math.max(0, clampedCursor - 1));
-    if (key.downArrow) setCursor(Math.min(count - 1, clampedCursor + 1));
+    if (key.upArrow) {
+      setCursor(Math.max(0, clampedCursor - 1));
+      setMessage(null);
+    }
+    if (key.downArrow) {
+      setCursor(Math.min(count - 1, clampedCursor + 1));
+      setMessage(null);
+    }
     if (input === 'w') props.onToggleWhitelist(props.users[clampedCursor]);
     if (input === 'u' && props.canUnfollow) {
       const login = props.users[clampedCursor];

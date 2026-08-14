@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { AuthError, GitHubClient, PermissionError, RateLimitError } from '../src/core/github.js';
 
-function httpError(status: number, headers: Record<string, string> = {}) {
-  const err = new Error(`HTTP ${status}`) as Error & {
+function httpError(status: number, headers: Record<string, string> = {}, message?: string) {
+  const err = new Error(message ?? `HTTP ${status}`) as Error & {
     status: number;
-    response: { headers: Record<string, string> };
+    response: { headers: Record<string, string>; data?: { message?: string } };
   };
   err.status = status;
-  err.response = { headers };
+  err.response = { headers, ...(message ? { data: { message } } : {}) };
   return err;
 }
 
@@ -75,6 +75,57 @@ describe('GitHubClient', () => {
     expect((await client.getViewer()).canUnfollow).toBeNull();
   });
 
+  it('maps a permission-denied 403 to PermissionError, not a rate limit', async () => {
+    // Fine-grained PATs without Followers:write get 403 with the quota untouched.
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(
+      httpError(
+        403,
+        { 'x-ratelimit-remaining': '4998', 'x-ratelimit-limit': '5000' },
+        'Resource not accessible by personal access token',
+      ),
+    );
+    const client = new GitHubClient(octokit as never);
+
+    const err = await client.unfollow('dave').catch((e) => e);
+    expect(err).toBeInstanceOf(PermissionError);
+    expect(err).not.toBeInstanceOf(RateLimitError);
+    expect((err as Error).message).toContain('Resource not accessible');
+  });
+
+  it('still maps an exhausted primary quota (403, remaining 0) to RateLimitError', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(
+      httpError(
+        403,
+        { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1755150000' },
+        'API rate limit exceeded',
+      ),
+    );
+    const client = new GitHubClient(octokit as never);
+
+    const err = await client.unfollow('dave').catch((e) => e);
+    expect(err).toBeInstanceOf(RateLimitError);
+  });
+
+  it('maps a secondary rate limit (403 + retry-after) to RateLimitError', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(
+      httpError(403, { 'retry-after': '60' }, 'You have exceeded a secondary rate limit'),
+    );
+    const client = new GitHubClient(octokit as never);
+
+    expect(await client.unfollow('dave').catch((e) => e)).toBeInstanceOf(RateLimitError);
+  });
+
+  it('maps 429 to RateLimitError even without rate-limit headers', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(httpError(429));
+    const client = new GitHubClient(octokit as never);
+
+    expect(await client.unfollow('dave').catch((e) => e)).toBeInstanceOf(RateLimitError);
+  });
+
   it('maps 404 on unfollow to a permission-flavored error', async () => {
     const octokit = fakeOctokit();
     octokit.rest.users.unfollow.mockRejectedValue(httpError(404));
@@ -114,10 +165,10 @@ describe('GitHubClient', () => {
     await expect(client.getViewer()).rejects.toBeInstanceOf(AuthError);
   });
 
-  it('maps 403 to RateLimitError with reset time from headers', async () => {
+  it('maps an exhausted-quota 403 to RateLimitError with reset time from headers', async () => {
     const octokit = fakeOctokit();
     octokit.rest.users.unfollow.mockRejectedValue(
-      httpError(403, { 'x-ratelimit-reset': '1755150000' }),
+      httpError(403, { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1755150000' }),
     );
     const client = new GitHubClient(octokit as never);
 

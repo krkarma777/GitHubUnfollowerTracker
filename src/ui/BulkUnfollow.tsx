@@ -21,6 +21,8 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
   const [progress, setProgress] = useState({ completed: 0, lastLogin: '' });
   const [result, setResult] = useState<UnfollowResult | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Snapshot at start: props change under us once onDone updates the graph.
+  const runTargetsRef = useRef<string[]>([]);
 
   useInput((input, key) => {
     if (stage === 'confirm') {
@@ -37,14 +39,25 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
     setStage('running');
     const controller = new AbortController();
     abortRef.current = controller;
-    runUnfollow(targets, (login) => props.client.unfollow(login), {
+    const runTargets = [...targets];
+    runTargetsRef.current = runTargets;
+
+    runUnfollow(runTargets, (login) => props.client.unfollow(login), {
       signal: controller.signal,
       onProgress: (completed, _total, login) => setProgress({ completed, lastLogin: login }),
-    }).then((res) => {
-      setResult(res);
-      props.onDone(res.done);
-      setStage('summary');
-    });
+    })
+      .catch((err): UnfollowResult => ({
+        done: [],
+        failed: [{ login: '—', error: err instanceof Error ? err.message : String(err) }],
+        aborted: false,
+        rateLimited: false,
+        rateLimitResetAt: null,
+      }))
+      .then((res) => {
+        setResult(res);
+        props.onDone(res.done);
+        setStage('summary');
+      });
   }
 
   if (stage === 'confirm') {
@@ -84,7 +97,7 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
     return (
       <Box flexDirection="column" padding={1}>
         <Text bold color="magenta">
-          Unfollowing… {progress.completed}/{targets.length}
+          Unfollowing… {progress.completed}/{runTargetsRef.current.length}
         </Text>
         <Text color="gray">last: {progress.lastLogin || '—'}</Text>
         <Text color="gray">esc to cancel</Text>
@@ -92,11 +105,19 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
     );
   }
 
+  const total = runTargetsRef.current.length;
+  const processed = (result?.done.length ?? 0) + (result?.failed.length ?? 0);
+
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color="magenta">
-        Done
+      <Text bold color={result?.aborted ? 'yellow' : 'magenta'}>
+        {result?.aborted ? 'Cancelled' : 'Done'}
       </Text>
+      {result?.aborted && (
+        <Text color="yellow">
+          Stopped by you — {processed} of {total} processed, {total - processed} left untouched.
+        </Text>
+      )}
       <Text color="green">Unfollowed {result?.done.length ?? 0}</Text>
       {result && result.failed.length > 0 && (
         <Box flexDirection="column">

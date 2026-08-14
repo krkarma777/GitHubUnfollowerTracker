@@ -8,6 +8,7 @@ const MENU: { label: string; target: MenuTarget }[] = [
   { label: 'Not following you back', target: 'notFollowingBack' },
   { label: 'Followers', target: 'followers' },
   { label: 'Following', target: 'following' },
+  { label: 'Fans (you do not follow back)', target: 'fans' },
   { label: 'Whitelist', target: 'whitelist' },
   { label: 'Bulk unfollow non-followers', target: 'bulkUnfollow' },
   { label: 'Quit', target: 'quit' },

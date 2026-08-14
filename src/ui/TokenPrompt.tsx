@@ -3,10 +3,12 @@ import { useState } from 'react';
 
 export interface TokenPromptProps {
   error: string | null;
+  /** GITHUB_TOKEN wins the resolution chain, so a bad one traps the user. */
+  envTokenSet?: boolean;
   onSubmit: (token: string) => void;
 }
 
-export function TokenPrompt({ error, onSubmit }: TokenPromptProps) {
+export function TokenPrompt({ error, envTokenSet, onSubmit }: TokenPromptProps) {
   const [value, setValue] = useState('');
 
   useInput((input, key) => {
@@ -30,6 +32,12 @@ export function TokenPrompt({ error, onSubmit }: TokenPromptProps) {
         GitHub token required
       </Text>
       {error && <Text color="red">{error}</Text>}
+      {envTokenSet && error && (
+        <Text color="yellow">
+          ⚠ GITHUB_TOKEN is set and takes precedence on every launch. A token you paste here works
+          for this session only — unset GITHUB_TOKEN (or fix it) to avoid landing here again.
+        </Text>
+      )}
       <Box marginTop={1} flexDirection="column">
         <Text color="gray">
           Paste a personal access token with the user:follow scope (or set GITHUB_TOKEN / log in

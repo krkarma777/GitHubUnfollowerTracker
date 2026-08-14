@@ -86,8 +86,10 @@ node dist/cli.js
 - Full rewrite from Kotlin/Spring Boot web app to a TypeScript + Ink TUI distributed on npm
 - OAuth web login replaced with a CLI-friendly token chain (env var → saved config → gh CLI → prompt)
 - Whitelist is now persistent (config file) instead of a per-request form field
-- Bulk unfollow keeps v2's concurrency but adds live progress, cancellation (esc), per-user
+- Bulk unfollow replaces v2's parallel coroutines with a serialized 1-request-per-second run
+  (GitHub's secondary rate-limit guidance), and adds live progress, cancellation (esc), per-user
   failure reporting, and rate-limit detection with reset time
+- Warns upfront when the resolved token can't unfollow, instead of failing on every request
 
 ## License
 

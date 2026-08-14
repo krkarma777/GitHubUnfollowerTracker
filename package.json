@@ -14,7 +14,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
     "test": "vitest run",
     "prepublishOnly": "npm run test && npm run build"
   },
@@ -40,6 +40,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^18.3.0",
+    "ink-testing-library": "^4.0.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
   }
