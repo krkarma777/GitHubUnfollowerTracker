@@ -151,7 +151,10 @@ It operates on the authenticated user's own follower graph only.
   [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies);
   this tool acts only on explicit confirmation
 
-## Development
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, the
+architecture tour, and how to exercise the unfollow path without destroying your own follow graph.
 
 ```bash
 npm install
@@ -163,6 +166,9 @@ node dist/cli.js
 
 Architecture: pure logic in `src/core/` (no UI imports, fully unit-tested), Ink components in
 `src/ui/`. Every IO seam is injectable, so tests never touch the network.
+
+Found a security issue? Please report it privately — see [SECURITY.md](./SECURITY.md).
+Participation is governed by the [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## v3.0.0
 

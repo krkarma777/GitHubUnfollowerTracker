@@ -1,0 +1,93 @@
+name: Bug report
+description: Something doesn't work as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a report.
+
+        **Never paste a GitHub token, even a revoked one.** If your report involves a token,
+        describe its type and scopes instead.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get instead?
+      placeholder: |
+        Bulk unfollow stopped after 3 users and reported "rate limited", but my quota was untouched.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npx github-unfollower`
+        2. Select "Bulk unfollow non-followers"
+        3. Press y
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `ghut --version` (or `npx github-unfollower --version`)
+      placeholder: "3.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      description: Output of `node --version`
+      placeholder: "v22.11.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows (WSL)
+        - Windows (native)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: token-type
+    attributes:
+      label: Which token is it using?
+      description: The first match in the chain — env var, saved config, gh CLI, or pasted at the prompt
+      options:
+        - gh CLI (`gh auth token`)
+        - Fine-grained personal access token
+        - Classic personal access token
+        - GITHUB_TOKEN environment variable
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: scopes
+    attributes:
+      label: Token permissions
+      description: |
+        For classic tokens: `gh auth status` shows the scope list.
+        For fine-grained tokens: the Followers permission setting.
+        Do not paste the token itself.
+      placeholder: "'gist', 'read:org', 'repo', 'user:follow'"
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Terminal emulator, follower/following counts, screenshots of the TUI
