@@ -21,6 +21,7 @@ export interface DashboardProps {
   notFollowingBack: number;
   fans: number;
   whitelistSize: number;
+  canUnfollow: boolean | null;
   onSelect: (target: MenuTarget) => void;
 }
 
@@ -48,6 +49,14 @@ export function Dashboard(props: DashboardProps) {
         <Stat label="Fans" value={props.fans} color="green" />
         <Stat label="Whitelist" value={props.whitelistSize} color="yellow" />
       </Box>
+      {props.canUnfollow === false && (
+        <Box marginTop={1}>
+          <Text color="red">
+            ⚠ This token has no user:follow scope — unfollowing will fail. Use a token with
+            Followers: write (fine-grained) or the user:follow scope (classic).
+          </Text>
+        </Box>
+      )}
       <Box flexDirection="column" marginTop={1}>
         {MENU.map((item, i) => (
           <Text key={item.target} color={i === cursor ? 'cyan' : undefined}>

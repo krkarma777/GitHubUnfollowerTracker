@@ -26,6 +26,7 @@ export function App({ store }: { store: ConfigStore }) {
   const [screen, setScreen] = useState<Screen>('loading');
   const [error, setError] = useState<string | null>(null);
   const [viewerLogin, setViewerLogin] = useState('');
+  const [canUnfollow, setCanUnfollow] = useState<boolean | null>(null);
   const [followers, setFollowers] = useState<string[]>([]);
   const [following, setFollowing] = useState<string[]>([]);
 
@@ -40,6 +41,7 @@ export function App({ store }: { store: ConfigStore }) {
         c.fetchAllFollowing(),
       ]);
       setViewerLogin(viewer.login);
+      setCanUnfollow(viewer.canUnfollow);
       setFollowers(followerList);
       setFollowing(followingList);
       setClient(c);
@@ -123,6 +125,7 @@ export function App({ store }: { store: ConfigStore }) {
         notFollowingBack={relations.notFollowingBack.length}
         fans={relations.fans.length}
         whitelistSize={config.whitelist.length}
+        canUnfollow={canUnfollow}
         onSelect={(s) => (s === 'quit' ? exit() : setScreen(s))}
       />
     );
@@ -133,6 +136,7 @@ export function App({ store }: { store: ConfigStore }) {
         notFollowingBack={relations.notFollowingBack}
         whitelist={config.whitelist}
         client={client}
+        canUnfollow={canUnfollow}
         onDone={handleUnfollowed}
         onBack={() => setScreen('dashboard')}
       />

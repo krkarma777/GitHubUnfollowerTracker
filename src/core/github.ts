@@ -10,9 +10,16 @@ export interface Viewer {
   login: string;
   followers: number;
   following: number;
+  /**
+   * Whether the token can unfollow. `null` when it can't be determined —
+   * fine-grained PATs and app tokens don't report OAuth scopes.
+   */
+  canUnfollow: boolean | null;
 }
 
 export class AuthError extends Error {}
+
+export class PermissionError extends Error {}
 
 export class RateLimitError extends Error {
   constructor(
@@ -28,8 +35,24 @@ interface HttpErrorLike {
   response?: { headers?: Record<string, string> };
 }
 
+/**
+ * Reads the classic-token scope list. Returns null when the header is absent
+ * or empty (fine-grained PAT / app token), meaning "can't tell".
+ */
+export function canUnfollowFromScopes(scopeHeader: unknown): boolean | null {
+  if (typeof scopeHeader !== 'string' || scopeHeader.trim() === '') return null;
+  const scopes = scopeHeader.split(',').map((s) => s.trim());
+  // The classic `user` scope is a superset that includes user:follow.
+  return scopes.includes('user:follow') || scopes.includes('user');
+}
+
 function mapError(err: unknown): never {
   const httpErr = err as HttpErrorLike;
+  if (httpErr?.status === 404) {
+    throw new PermissionError(
+      'GitHub returned 404. Either the user no longer exists, or your token lacks the Followers write permission (user:follow scope on classic tokens).',
+    );
+  }
   if (httpErr?.status === 401) {
     throw new AuthError(
       'GitHub rejected the token (401). It may be expired or missing the Followers write permission (user:follow scope on classic tokens).',
@@ -63,8 +86,13 @@ export class GitHubClient {
 
   async getViewer(): Promise<Viewer> {
     try {
-      const { data } = await this.octokit.rest.users.getAuthenticated();
-      return { login: data.login, followers: data.followers, following: data.following };
+      const { data, headers } = await this.octokit.rest.users.getAuthenticated();
+      return {
+        login: data.login,
+        followers: data.followers,
+        following: data.following,
+        canUnfollow: canUnfollowFromScopes(headers?.['x-oauth-scopes']),
+      };
     } catch (err) {
       mapError(err);
     }

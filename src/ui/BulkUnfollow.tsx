@@ -8,6 +8,7 @@ export interface BulkUnfollowProps {
   notFollowingBack: string[];
   whitelist: string[];
   client: GitHubClient;
+  canUnfollow: boolean | null;
   onDone: (unfollowed: string[]) => void;
   onBack: () => void;
 }
@@ -57,6 +58,12 @@ export function BulkUnfollow(props: BulkUnfollowProps) {
             {props.notFollowingBack.length} not following you back, {props.whitelist.length}{' '}
             whitelisted → <Text bold color="red">{targets.length} will be unfollowed</Text>
           </Text>
+          {props.canUnfollow === false && (
+            <Text color="red">
+              ⚠ Your token lacks the user:follow scope — every request will fail with 404. Fix the
+              token before running this.
+            </Text>
+          )}
           {targets.length === 0 ? (
             <Text color="green">Nothing to do. esc to go back.</Text>
           ) : (

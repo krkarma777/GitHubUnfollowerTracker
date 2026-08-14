@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AuthError, GitHubClient, RateLimitError } from '../src/core/github.js';
+import { AuthError, GitHubClient, PermissionError, RateLimitError } from '../src/core/github.js';
 
 function httpError(status: number, headers: Record<string, string> = {}) {
   const err = new Error(`HTTP ${status}`) as Error & {
@@ -18,6 +18,7 @@ function fakeOctokit(overrides: Record<string, unknown> = {}) {
       users: {
         getAuthenticated: vi.fn().mockResolvedValue({
           data: { login: 'me', followers: 10, following: 20 },
+          headers: { 'x-oauth-scopes': 'repo, user:follow' },
         }),
         listFollowersForAuthenticatedUser: 'followers-route',
         listFollowedByAuthenticatedUser: 'following-route',
@@ -33,7 +34,55 @@ describe('GitHubClient', () => {
     const octokit = fakeOctokit();
     const client = new GitHubClient(octokit as never);
 
-    expect(await client.getViewer()).toEqual({ login: 'me', followers: 10, following: 20 });
+    expect(await client.getViewer()).toEqual({
+      login: 'me',
+      followers: 10,
+      following: 20,
+      canUnfollow: true,
+    });
+  });
+
+  it('getViewer flags canUnfollow false when the token scopes lack user:follow', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.getAuthenticated.mockResolvedValue({
+      data: { login: 'me', followers: 1, following: 2 },
+      headers: { 'x-oauth-scopes': 'gist, read:org, repo, workflow' },
+    });
+    const client = new GitHubClient(octokit as never);
+
+    expect((await client.getViewer()).canUnfollow).toBe(false);
+  });
+
+  it('treats the classic `user` scope as covering user:follow', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.getAuthenticated.mockResolvedValue({
+      data: { login: 'me', followers: 1, following: 2 },
+      headers: { 'x-oauth-scopes': 'repo, user' },
+    });
+    const client = new GitHubClient(octokit as never);
+
+    expect((await client.getViewer()).canUnfollow).toBe(true);
+  });
+
+  it('reports canUnfollow as unknown for fine-grained tokens that send no scope header', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.getAuthenticated.mockResolvedValue({
+      data: { login: 'me', followers: 1, following: 2 },
+      headers: {},
+    });
+    const client = new GitHubClient(octokit as never);
+
+    expect((await client.getViewer()).canUnfollow).toBeNull();
+  });
+
+  it('maps 404 on unfollow to a permission-flavored error', async () => {
+    const octokit = fakeOctokit();
+    octokit.rest.users.unfollow.mockRejectedValue(httpError(404));
+    const client = new GitHubClient(octokit as never);
+
+    const err = await client.unfollow('dave').catch((e) => e);
+    expect(err).toBeInstanceOf(PermissionError);
+    expect((err as Error).message).toMatch(/user:follow|Followers/);
   });
 
   it('fetches all followers and following via paginate, mapping to logins', async () => {
