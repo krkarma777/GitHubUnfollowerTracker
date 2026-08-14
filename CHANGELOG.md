@@ -7,6 +7,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `--dry-run` prints exactly who a bulk unfollow would touch and exits without changing anything
+- `--json` emits the same report as machine-readable JSON (implies `--dry-run`)
+- Both flags work without a TTY, so the tool is usable from scripts and CI
+- Unrecognised options now exit with code 2 instead of silently launching the TUI
+- Distinct exit codes: `0` success, `1` could not run, `2` usage error, `3` rate limited. A rate
+  limit also reports when it resets
+- `GHUT_API_URL` overrides the API base URL, for GitHub Enterprise Server
+
 ## [3.0.0] - 2026-08-14
 
 Complete rewrite: the Kotlin/Spring Boot web application is now a TypeScript npm package with an

@@ -3,51 +3,29 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { render } from 'ink';
-import { ConfigStore, defaultConfigDir } from './core/config.js';
+import { resolveToken } from './core/auth.js';
+import { ConfigStore } from './core/config.js';
+import { GitHubClient } from './core/github.js';
+import { run } from './core/run.js';
 import { App } from './ui/App.js';
 
-const args = process.argv.slice(2);
+const pkgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
+const store = new ConfigStore();
 
-function packageVersion(): string {
-  const pkgPath = join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json');
-  return JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+const result = await run({
+  argv: process.argv.slice(2),
+  out: (text) => console.log(text),
+  err: (text) => console.error(text),
+  isTTY: Boolean(process.stdin.isTTY && process.stdout.isTTY),
+  version: JSON.parse(readFileSync(pkgPath, 'utf8')).version,
+  store,
+  resolveToken: (configToken) => resolveToken({ configToken }),
+  createClient: GitHubClient.withToken,
+});
+
+if (result === 'tui') {
+  render(<App store={store} />);
+} else {
+  // Not process.exit(): that would truncate stdout mid-write on a pipe.
+  process.exitCode = result;
 }
-
-if (args.includes('--version') || args.includes('-v')) {
-  console.log(packageVersion());
-  process.exit(0);
-}
-
-if (args.includes('--help') || args.includes('-h')) {
-  console.log(`ghut — GitHub Unfollower Tracker (v${packageVersion()})
-
-Usage:
-  ghut              Launch the interactive TUI
-  ghut --version    Print the version
-  ghut --help       Show this help
-
-Authentication (first match wins):
-  1. GITHUB_TOKEN environment variable
-  2. token saved in ${join(defaultConfigDir(), 'config.json')}
-  3. gh auth token   (GitHub CLI)
-  4. interactive prompt
-
-The token needs the Followers write permission (fine-grained) or the
-user:follow scope (classic). With the GitHub CLI:
-  gh auth refresh -s user:follow
-
-Environment:
-  GITHUB_TOKEN       Token to use, highest precedence
-  GHUT_CONFIG_DIR    Override the config directory (default above)
-
-Keys:
-  arrows move · enter select · u unfollow · w whitelist · esc back · q quit`);
-  process.exit(0);
-}
-
-if (!process.stdin.isTTY || !process.stdout.isTTY) {
-  console.error('ghut is an interactive TUI and needs a terminal (TTY). Try --help.');
-  process.exit(1);
-}
-
-render(<App store={new ConfigStore()} />);

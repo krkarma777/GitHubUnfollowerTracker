@@ -41,6 +41,10 @@ export function App({ store, createClient = GitHubClient.withToken }: AppProps) 
 
   const relations = useMemo(() => computeRelations(followers, following), [followers, following]);
 
+  // Fetches the same data as core/report.ts buildReport(), but keeps the lists
+  // as separate state so screens can mutate them, and needs a hook between
+  // authenticating and fetching so a pasted token is only saved once it works.
+  // Changes to the fetch sequence belong in both places.
   const loadData = useCallback(async (c: GitHubClient, onAuthenticated?: () => void) => {
     setScreen('loading');
     try {

@@ -24,8 +24,11 @@ The split that matters: **`src/core/` never imports from `src/ui/`.**
 
 ```
 src/
-  cli.tsx                  flag parsing, TTY guard, renders <App/>
+  cli.tsx                  flag dispatch, TTY guard, renders <App/>
   core/                    pure logic — unit tested, no React
+    args.ts                argv → mode (tui / dry-run / help / version)
+    run.ts                 CLI dispatch → exit code, or 'tui' for the caller
+    report.ts              read-only follow-graph report + text/JSON formatting
     relations.ts           set diff: mutuals / notFollowingBack / fans
     config.ts              ~/.config/ghut/config.json (0600)
     auth.ts                token chain: env → config → gh CLI (prompt is the UI's fallback)
@@ -90,12 +93,33 @@ A `404` on the `DELETE` line means the token lacks permission, not that the user
 **Never point this at someone you follow.** `DELETE` is irreversible and GitHub has no bulk
 re-follow.
 
+### Exercising the read path
+
+`--dry-run` runs the whole pipeline — token resolution, pagination, relation diff, whitelist
+filtering — and prints the result without issuing a single `DELETE`:
+
+```bash
+GHUT_CONFIG_DIR=$(mktemp -d) node dist/cli.js --dry-run
+node dist/cli.js --json | jq .
+```
+
+This is the safe way to check a change to `github.ts`, `relations.ts`, or `report.ts` against your
+real account.
+
+### End-to-end tests
+
+`test/cli-process.test.ts` runs the **built** binary against a stub GitHub API over a real pipe,
+using `GHUT_API_URL`. That combination matters: stdout behaves differently on a pipe than on a
+file, and bugs there are invisible to in-process tests. `npm test` builds first, so `dist/` is
+always current.
+
+`GHUT_API_URL` also points the tool at a GitHub Enterprise Server instance.
+
 ### What this doesn't cover
 
-The recipe above exercises the API, not the tool's own code path (`GitHubClient.unfollow` and
-`runUnfollow`). Those are covered by the test suite with an injected client. There is currently no
-dry-run mode for driving the real bulk-unfollow path safely — see
-[#14](https://github.com/krkarma777/GitHubUnfollowerTracker/issues/14).
+Nothing exercises `GitHubClient.unfollow` or `runUnfollow` against the live API — those are covered
+by the test suite with an injected client, and by the idempotent `DELETE` check above at the HTTP
+level only.
 
 ## Conventions
 
