@@ -21,6 +21,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A bulk unfollow no longer keeps running after Ctrl+C. The Ink tree unmounted without ending the
+  process, so the loop carried on issuing one irreversible unfollow per second with no UI attached
 - Octokit no longer logs failed requests to stderr (`GET /user - 401 with id ... in 12ms`).
   Errors are reported once, in our own wording, which keeps `--json` pipelines clean
 
