@@ -145,8 +145,43 @@ describe('GitHubClient', () => {
 
     expect(await client.fetchAllFollowers()).toEqual(['a', 'b']);
     expect(await client.fetchAllFollowing()).toEqual(['c']);
-    expect(octokit.paginate).toHaveBeenCalledWith('followers-route', { per_page: 100 });
-    expect(octokit.paginate).toHaveBeenCalledWith('following-route', { per_page: 100 });
+    expect(octokit.paginate).toHaveBeenCalledWith(
+      'followers-route',
+      { per_page: 100 },
+      expect.any(Function),
+    );
+    expect(octokit.paginate).toHaveBeenCalledWith(
+      'following-route',
+      { per_page: 100 },
+      expect.any(Function),
+    );
+  });
+
+  it('reports a running total as pages arrive, so a long load shows progress', async () => {
+    const pages = [['a', 'b'], ['c', 'd'], ['e']];
+    const octokit = fakeOctokit();
+    octokit.paginate.mockImplementation(
+      async (_route: unknown, _params: unknown, mapPage: (r: { data: unknown[] }) => unknown[]) =>
+        pages.flatMap((page) => mapPage({ data: page.map((login) => ({ login })) })),
+    );
+    const client = new GitHubClient(octokit as never);
+
+    const seen: number[] = [];
+    const result = await client.fetchAllFollowers((loaded) => seen.push(loaded));
+
+    expect(result).toEqual(['a', 'b', 'c', 'd', 'e']);
+    expect(seen).toEqual([2, 4, 5]);
+  });
+
+  it('paginates fine without a progress callback', async () => {
+    const octokit = fakeOctokit();
+    octokit.paginate.mockImplementation(
+      async (_route: unknown, _params: unknown, mapPage: (r: { data: unknown[] }) => unknown[]) =>
+        mapPage({ data: [{ login: 'solo' }] }),
+    );
+    const client = new GitHubClient(octokit as never);
+
+    expect(await client.fetchAllFollowing()).toEqual(['solo']);
   });
 
   it('unfollow calls the unfollow endpoint with the username', async () => {

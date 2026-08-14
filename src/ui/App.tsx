@@ -7,6 +7,7 @@ import { computeRelations } from '../core/relations.js';
 import { BulkUnfollow } from './BulkUnfollow.js';
 import { Dashboard } from './Dashboard.js';
 import { ErrorScreen } from './ErrorScreen.js';
+import { Loading } from './Loading.js';
 import { TokenPrompt } from './TokenPrompt.js';
 import { UserList } from './UserList.js';
 
@@ -38,6 +39,7 @@ export function App({ store, createClient = GitHubClient.withToken }: AppProps) 
   const [canUnfollow, setCanUnfollow] = useState<boolean | null>(null);
   const [followers, setFollowers] = useState<string[]>([]);
   const [following, setFollowing] = useState<string[]>([]);
+  const [progress, setProgress] = useState({ followers: 0, following: 0 });
 
   const relations = useMemo(() => computeRelations(followers, following), [followers, following]);
 
@@ -47,12 +49,13 @@ export function App({ store, createClient = GitHubClient.withToken }: AppProps) 
   // Changes to the fetch sequence belong in both places.
   const loadData = useCallback(async (c: GitHubClient, onAuthenticated?: () => void) => {
     setScreen('loading');
+    setProgress({ followers: 0, following: 0 });
     try {
       const viewer = await c.getViewer();
       onAuthenticated?.();
       const [followerList, followingList] = await Promise.all([
-        c.fetchAllFollowers(),
-        c.fetchAllFollowing(),
+        c.fetchAllFollowers((loaded) => setProgress((p) => ({ ...p, followers: loaded }))),
+        c.fetchAllFollowing((loaded) => setProgress((p) => ({ ...p, following: loaded }))),
       ]);
       setViewerLogin(viewer.login);
       setCanUnfollow(viewer.canUnfollow);
@@ -129,11 +132,7 @@ export function App({ store, createClient = GitHubClient.withToken }: AppProps) 
     return <ErrorScreen message={error} onRetry={() => void start()} onQuit={exit} />;
   }
   if (screen === 'loading' || !client) {
-    return (
-      <Box padding={1}>
-        <Text color="cyan">Loading your GitHub social graph…</Text>
-      </Box>
-    );
+    return <Loading followers={progress.followers} following={progress.following} />;
   }
   if (screen === 'dashboard') {
     return (
