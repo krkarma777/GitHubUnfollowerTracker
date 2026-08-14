@@ -90,6 +90,8 @@ function mapError(err: unknown): never {
   throw err;
 }
 
+const noop = () => {};
+
 export class GitHubClient {
   constructor(private readonly octokit: Octokit) {}
 
@@ -97,7 +99,15 @@ export class GitHubClient {
     // GHUT_API_URL points at a GitHub Enterprise Server instance, and lets the
     // end-to-end tests run the built CLI against a local stub.
     const baseUrl = process.env.GHUT_API_URL?.trim();
-    const octokit = new Octokit({ auth: token, ...(baseUrl ? { baseUrl } : {}) });
+    const octokit = new Octokit({
+      auth: token,
+      ...(baseUrl ? { baseUrl } : {}),
+      // Octokit logs every failed request to stderr ("GET /user - 401 with id
+      // ... in 12ms"). We map errors into our own messages, so that line is
+      // duplicate noise in a --json pipeline. `warn` stays: deprecation
+      // notices are worth surfacing.
+      log: { debug: noop, info: noop, warn: console.warn, error: noop },
+    });
     octokit.hook.before('request', (options) => {
       options.headers['x-github-api-version'] = GITHUB_API_VERSION;
     });

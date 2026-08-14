@@ -17,6 +17,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   limit also reports when it resets
 - `GHUT_API_URL` overrides the API base URL, for GitHub Enterprise Server
 
+### Fixed
+
+- Octokit no longer logs failed requests to stderr (`GET /user - 401 with id ... in 12ms`).
+  Errors are reported once, in our own wording, which keeps `--json` pipelines clean
+
 ## [3.0.0] - 2026-08-14
 
 Complete rewrite: the Kotlin/Spring Boot web application is now a TypeScript npm package with an

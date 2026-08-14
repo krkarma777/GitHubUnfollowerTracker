@@ -30,7 +30,10 @@ beforeAll(async () => {
       res.end(JSON.stringify(body));
     };
 
-    if (path === '/user') {
+    if ((req.headers.authorization ?? '').includes('bad-token')) {
+      res.writeHead(401, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ message: 'Bad credentials' }));
+    } else if (path === '/user') {
       json(
         { login: 'stub-user', followers: 0, following: FOLLOWING_COUNT },
         { 'x-oauth-scopes': 'repo, user:follow' },
@@ -114,6 +117,21 @@ describe('built CLI', () => {
     expect(parsed.login).toBe('stub-user');
     expect(parsed.wouldUnfollow).toHaveLength(FOLLOWING_COUNT);
     expect(parsed.counts.wouldUnfollow).toBe(FOLLOWING_COUNT);
+  });
+
+  it('reports an auth failure without leaking Octokit request logging', async () => {
+    const { code, stderr, stdout } = await cli(['--json'], {
+      GHUT_API_URL: apiUrl,
+      GITHUB_TOKEN: 'bad-token',
+    });
+
+    expect(code).toBe(1);
+    expect(stderr).toContain('Authentication failed');
+    // Octokit logs "GET /user - 401 with id ... in 12ms" via log.error by
+    // default, which is noise in a pipeline and says more than it should.
+    expect(stderr).not.toMatch(/GET \/user/);
+    expect(stderr).not.toMatch(/with id/);
+    expect(stdout).toBe('');
   });
 
   it('delivers the large text report through a pipe intact', async () => {
